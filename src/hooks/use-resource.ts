@@ -1,30 +1,25 @@
 import type { Client, State as ResourceState, } from 'ketting';
 import { HalState, Links, Resource, isState } from 'ketting'
-import { watch, readonly, ref, shallowRef, watchEffect, computed, reactive, unref } from 'vue'
-import type { ComputedRef, Ref, UnwrapRef } from 'vue'
+import { watch, readonly, ref, computed } from 'vue'
+import type { UnwrapRef } from 'vue'
 import { useClient } from './use-client'
 
 type ResourceLike<T> = Resource<T> | PromiseLike<Resource<T>> | string;
-const computedRef = 'computedRef'
-const regularRef = 'regularRef'
+const readonlyRef = 'readonlyRef'
 
 class Wrapper<T> {
     // wrapped has no explicit return type so we can infer it
-    [computedRef](e: ComputedRef<T>) {
-        return readonly(e)
-    }
-    [regularRef](e: T) {
+    [readonlyRef](e: T) {
         return readonly(ref(e || undefined))
     }
 }
 
-type ReadonlyRef<T> = ReturnType<Wrapper<T>[typeof regularRef]>
-
+type ReadonlyRef<T> = ReturnType<Wrapper<T>[typeof readonlyRef]>
 
 type UseResourceResponse<T> = {
     // True if there is no data yet
     loading: ReadonlyRef<boolean>,
-    error: ReadonlyRef<Error | null>;
+    error: ReadonlyRef<Error>;
     // A full Ketting State object
     resourceState: ReadonlyRef<ResourceState<T>>;
     // Update the state
@@ -112,18 +107,16 @@ export function useResource<T>(options: UseResourceOptions<T>): UseResourceRespo
 export function useResource<T>(arg1: ResourceLike<T> | UseResourceOptions<T> | string): UseResourceResponse<T> {
     const [resourceLike, mode, initialData, refreshOnStale] = getUseResourceOptions(arg1);
     const client = useClient();
-
-    const resourceState = ref(useResourceState(resourceLike, initialData, client))
+    const hoi = useResourceState(resourceLike, initialData, client)
+    const resourceState = ref(hoi)
     const resource = ref(resourceLike instanceof Resource ? resourceLike : undefined)
     const data = computed(() => resourceState.value?.data)
     const loading = ref(true)
     const error = ref<Error|undefined>(undefined)
-
     const modeVal = ref(mode);
 
-    function setResourceStateInternal(newState: ResourceState<T>) {
-        const val = resourceState.value
-        resourceState.value = newState as any
+    function setResourceState(newState: ResourceState<T>) {
+        resourceState.value = newState.clone() as any
     }
 
     function setError(err: Error) {
@@ -138,17 +131,16 @@ export function useResource<T>(arg1: ResourceLike<T> | UseResourceOptions<T> | s
 
         const onStale = () => {
             if (refreshOnStale) {
-                value
-                    .refresh()
+                value.refresh()
                     .catch(setError);
             }
         };
 
-        value.on('update', setResourceStateInternal);
+        value.on('update', setResourceState);
         value.on('stale', onStale);
 
         onInvalidate(function unmount() {
-            value.off('update', setResourceStateInternal);
+            value.off('update', setResourceState);
             value.off('stale', onStale);
         })
     })
@@ -174,26 +166,23 @@ export function useResource<T>(arg1: ResourceLike<T> | UseResourceOptions<T> | s
         // The 'resource' property has changed, so lets get the new resourceState and data.
         const cachedState = value.client.cache.get(value.uri);
         if (cachedState) {
-            setResourceStateInternal(cachedState)
+            setResourceState(cachedState)
             return;
         }
 
         loading.value = true
 
         value.get()
-            .then(setResourceStateInternal)
+            .then(setResourceState)
             .catch(setError);
     })
 
     watch(error, () => {
         loading.value = false
-        resourceState.value = undefined
-        resource.value = undefined
     })
 
     watch(data, () => {
         loading.value = false
-        error.value = undefined
     })
 
 
@@ -201,65 +190,57 @@ export function useResource<T>(arg1: ResourceLike<T> | UseResourceOptions<T> | s
         resource.value = resourceLike
     } else if (typeof resourceLike === 'string') {
         try {
-            resource.value = client.go(resourceLike)
+            resource.value = client.go<T>(resourceLike)
         } catch (err) {
-            error.value = err
+            setError(err)
         }
     } else {
         Promise.resolve(resourceLike).then(newRes => {
             resource.value = newRes
-        }).catch(err => {
-            error.value = err
-        });
-    }
-
-    function setResourceState(newState: ResourceState<T>) {
-        const resourceVal = resource.value
-        if (!resourceVal) {
-            throw new Error('Too early to call setResourceState, we don\'t have a current state to update');
-        }
-        if (modeVal.value === 'PUT') {
-            resourceVal.updateCache(newState);
-        } else {
-            setResourceStateInternal(newState)
-        }
-    }
-
-    function setData(newData: T) {
-        const stateVal = resourceState.value,
-            resourceVal = resource.value
-
-        if (!stateVal || !resourceVal) {
-            throw new Error('Too early to call setResourceState, we don\'t have a current state to update');
-        }
-        stateVal.data = newData as UnwrapRef<T>
-        if (modeVal.value === 'PUT') {
-            resourceVal.updateCache(stateVal as any);
-        } else {
-            resourceState.value = stateVal
-        }
-    }
-
-    async function submit() {
-        const stateVal = resourceState.value, resourceVal = resource.value
-        
-        if (!stateVal || !resourceVal) {
-            throw new Error('Too early to call submit()');
-        }
-
-        if (modeVal.value === 'POST') {
-            const newResource = await resourceVal.postFollow(stateVal);
-            resource.value = newResource;
-            modeVal.value = 'PUT';
-        } else {
-            await resourceVal.put(stateVal as any);
-        }
+        }).catch(setError);
     }
 
     return {
-        submit,
-        setData,
-        setResourceState,
+        async submit() {
+            const stateVal = resourceState.value, resourceVal = resource.value
+            
+            if (!stateVal || !resourceVal) {
+                throw new Error('Too early to call submit()');
+            }
+    
+            if (modeVal.value === 'POST') {
+                const newResource = await resourceVal.postFollow(stateVal);
+                resource.value = newResource;
+                modeVal.value = 'PUT';
+            } else {
+                await resourceVal.put(stateVal as any);
+            }
+        },
+        setData(newData: T) {
+            const stateVal = resourceState.value,
+                resourceVal = resource.value
+    
+            if (!stateVal || !resourceVal) {
+                throw new Error('Too early to call setData, we don\'t have a current state to update');
+            }
+            stateVal.data = newData as UnwrapRef<T>
+            if (modeVal.value === 'PUT') {
+                resourceVal.updateCache(stateVal as any);
+            } else {
+                resourceState.value = stateVal
+            }
+        },
+        setResourceState(newState: ResourceState<T>) {
+            const resourceVal = resource.value
+            if (!resourceVal) {
+                throw new Error('Too early to call setResourceState, we don\'t have a current state to update');
+            }
+            if (modeVal.value === 'PUT') {
+                resourceVal.updateCache(newState);
+            } else {
+                setResourceState(newState)
+            }
+        },
         loading: readonly(loading),
         data: readonly(data),
         resourceState: readonly(resourceState),

@@ -16,7 +16,7 @@
 </template>
   
 <script setup lang="ts"> 
-import { useResource } from '..'
+import { useResource } from '../src'
 import type { Article } from './types'
 
 const { error, loading, setData, submit, data, resource } = useResource<Article>('/api/article/1')

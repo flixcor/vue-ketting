@@ -1,6 +1,6 @@
 import type { Client, State as ResourceState, } from 'ketting';
 import { HalState, Links, Resource, isState } from 'ketting'
-import { watch, readonly, ref, computed } from 'vue'
+import { watch, readonly, ref, computed, shallowRef } from 'vue'
 import type { UnwrapRef } from 'vue'
 import { useClient } from './use-client'
 
@@ -107,8 +107,7 @@ export function useResource<T>(options: UseResourceOptions<T>): UseResourceRespo
 export function useResource<T>(arg1: ResourceLike<T> | UseResourceOptions<T> | string): UseResourceResponse<T> {
     const [resourceLike, mode, initialData, refreshOnStale] = getUseResourceOptions(arg1);
     const client = useClient();
-    const hoi = useResourceState(resourceLike, initialData, client)
-    const resourceState = ref(hoi)
+    const resourceState = shallowRef(useResourceState(resourceLike, initialData, client))
     const resource = ref(resourceLike instanceof Resource ? resourceLike : undefined)
     const data = computed(() => resourceState.value?.data)
     const loading = ref(true)
@@ -116,7 +115,7 @@ export function useResource<T>(arg1: ResourceLike<T> | UseResourceOptions<T> | s
     const modeVal = ref(mode);
 
     function setResourceState(newState: ResourceState<T>) {
-        resourceState.value = newState.clone() as any
+        resourceState.value = newState.clone()
     }
 
     function setError(err: Error) {

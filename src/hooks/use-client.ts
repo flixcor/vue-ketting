@@ -1,5 +1,5 @@
 import { Client } from 'ketting';
-import { KettingClientKey } from '../utils/config';
+import { KettingClientKey } from '../config';
 import { getCurrentInstance  } from 'vue'
 
 export function useClient(): Client {

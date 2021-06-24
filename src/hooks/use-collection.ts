@@ -1,7 +1,8 @@
 import { Resource, State as ResourceState } from 'ketting';
-import { useState, useEffect } from 'react';
 import { ResourceLike } from '../util';
 import { useResolveResource } from './use-resolve-resource';
+import { ref } from 'vue'
+
 
 /**
  * The result of a useCollection hook.
@@ -87,20 +88,20 @@ export function useCollection<T = any>(resourceLike: ResourceLike<any>, options?
 
   const { resource, error: resolveError } = useResolveResource(resourceLike);
 
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<null|Error>(null);
-  const [items, setItems] = useState<Resource<T>[]>([]);
+  const loading = ref(true);
+  const error = ref<null|Error>(null);
+  const items = ref<Resource<T>[]>([]);
 
   useEffect( () => {
     if (resolveError) {
-      setError(resolveError);
-      setLoading(false);
+      error.value = (resolveError);
+      loading.value = (false);
       return;
     }
     if (!resource) {
       // No resource yet, lets wait for it.
-      setLoading(true);
-      setItems([]);
+      loading.value = (true);
+      items.value = ([]);
       return;
     }
     // Now we got a resource, let's find its children.
@@ -108,18 +109,18 @@ export function useCollection<T = any>(resourceLike: ResourceLike<any>, options?
       .followAll(rel)
       .preferTransclude()
       .then( result => {
-        setItems(result);
-        setLoading(false);
+        items.value = (result);
+        loading.value = (false);
       })
       .catch(err => {
-        setError(err);
-        setLoading(false);
+        error.value = (err);
+        loading.value = (false);
       });
 
     const updateHandler = (newState: ResourceState) => {
       const newItems = newState.links.getMany(rel)
         .map(link => resource.go(link.href));
-      setItems(newItems);
+      items.value = (newItems);
     };
 
     const staleHandler = () => {
@@ -127,7 +128,7 @@ export function useCollection<T = any>(resourceLike: ResourceLike<any>, options?
         resource
           .refresh()
           .catch(err => {
-            setError(err);
+            error.value = (err);
           });
       }
     };

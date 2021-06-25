@@ -8,11 +8,11 @@ export default function useApiStub(){
             article: Model.extend<Partial<Article>>({})
         },
         factories: {
-            article: Factory.extend<Partial<Article>>({
-              get title() {
+            article: Factory.extend<Record<keyof Article, () => string>>({
+              title() {
                   return lorem.sentence(5).replaceAll('.', '')
               },
-              get body() {
+              body() {
                   return lorem.paragraphs(5)
               }
             })

@@ -1,5 +1,5 @@
 import { createServer, Model, Factory, Response } from 'miragejs'
-import { Article } from './types'
+import type { Article } from './types'
 import { lorem } from "faker";
 
 export default function useApiStub(){

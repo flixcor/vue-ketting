@@ -1,27 +1,16 @@
 import type { Client, State as ResourceState, } from 'ketting';
 import { HalState, Links, Resource, isState } from 'ketting'
-import { watch, readonly, ref, computed, shallowRef } from 'vue'
-import type { UnwrapRef } from 'vue'
+import { watch, readonly, computed, shallowRef } from 'vue'
 import { useClient } from './use-client'
-
-type ResourceLike<T> = Resource<T> | PromiseLike<Resource<T>> | string;
-const readonlyRef = 'readonlyRef'
-
-class Wrapper<T> {
-    // wrapped has no explicit return type so we can infer it
-    [readonlyRef](e: T) {
-        return readonly(ref(e || undefined))
-    }
-}
-
-type ReadonlyRef<T> = ReturnType<Wrapper<T>[typeof readonlyRef]>
+import { useResolveResource } from './use-resolve-resource'
+import type { ReadonlyRef, ResourceLike } from '../util'
 
 type UseResourceResponse<T> = {
     // True if there is no data yet
     loading: ReadonlyRef<boolean>,
-    error: ReadonlyRef<Error>;
+    error: ReadonlyRef<Error | null>;
     // A full Ketting State object
-    resourceState: ReadonlyRef<ResourceState<T>>;
+    resourceState: ReadonlyRef<ResourceState<T> | undefined>;
     // Update the state
     setResourceState: (newState: ResourceState<T>) => void;
     // Send the state to the server via a PUT or POST request.
@@ -31,7 +20,7 @@ type UseResourceResponse<T> = {
     // Update the data from the state.
     setData: (newData: T) => void;
     // The 'real' resource.
-    resource: ReadonlyRef<Resource<T>>;
+    resource: ReadonlyRef<Resource<T> | undefined>;
 }
 
 export type UseResourceOptions<T> = {
@@ -108,19 +97,21 @@ export function useResource<T>(arg1: ResourceLike<T> | UseResourceOptions<T> | s
     const [resourceLike, mode, initialData, refreshOnStale] = getUseResourceOptions(arg1);
     const client = useClient();
     const resourceState = shallowRef(useResourceState(resourceLike, initialData, client))
-    const resource = ref(resourceLike instanceof Resource ? resourceLike : undefined)
+    const { resource, error: resolveError } = useResolveResource(resourceLike)
     const data = computed(() => resourceState.value?.data)
-    const loading = ref(true)
-    const error = ref<Error|undefined>(undefined)
-    const modeVal = ref(mode);
+    const loading = shallowRef(true)
+    const error = shallowRef<Error|null>(null)
+    const modeVal = shallowRef(mode);
 
     function setResourceState(newState: ResourceState<T>) {
         resourceState.value = newState.clone()
     }
 
-    function setError(err: Error) {
+    function setError(err: Error|null) {
         error.value = err
     }
+
+    watch(resolveError, setError)
 
     watch(resource, (value, _, onInvalidate) => {
         // This effect is for setting up the onUpdate event
@@ -142,7 +133,7 @@ export function useResource<T>(arg1: ResourceLike<T> | UseResourceOptions<T> | s
             value.off('update', setResourceState);
             value.off('stale', onStale);
         })
-    })
+    }, { immediate: true })
 
     watch(resource, value => {
         // This effect is for fetching the initial ResourceState
@@ -174,7 +165,7 @@ export function useResource<T>(arg1: ResourceLike<T> | UseResourceOptions<T> | s
         value.get()
             .then(setResourceState)
             .catch(setError);
-    })
+    }, { immediate: true })
 
     watch(error, () => {
         loading.value = false
@@ -222,7 +213,7 @@ export function useResource<T>(arg1: ResourceLike<T> | UseResourceOptions<T> | s
             if (!stateVal || !resourceVal) {
                 throw new Error('Too early to call setData, we don\'t have a current state to update');
             }
-            stateVal.data = newData as UnwrapRef<T>
+            stateVal.data = newData
             if (modeVal.value === 'PUT') {
                 resourceVal.updateCache(stateVal as any);
             } else {
@@ -240,11 +231,11 @@ export function useResource<T>(arg1: ResourceLike<T> | UseResourceOptions<T> | s
                 setResourceState(newState)
             }
         },
-        loading: readonly(loading),
         data: readonly(data),
         resourceState: readonly(resourceState),
-        resource: readonly(resource),
-        error: readonly(error)
+        loading,
+        resource,
+        error
     }
 }
 

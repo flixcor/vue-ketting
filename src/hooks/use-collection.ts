@@ -1,8 +1,7 @@
 import { Resource, State as ResourceState } from 'ketting';
-import { ResourceLike } from '../util';
+import type { ReadonlyRef, ResourceLike  } from '../util'
 import { useResolveResource } from './use-resolve-resource';
-import { ref } from 'vue'
-
+import { watch, shallowRef } from 'vue'
 
 /**
  * The result of a useCollection hook.
@@ -12,19 +11,19 @@ type UseCollectionResponse<T> = {
   /**
    * True if there is no data or no error yet
    */
-  loading: boolean;
+  loading: ReadonlyRef<boolean>;
 
   /**
    * Will contain an Error object if an error occurred anywhere in the
    */
-  error: Error | null;
+  error: ReadonlyRef<Error | null>;
 
   /**
    * List of collection members.
    *
    * This starts off as an empty array.
    */
-  items: Resource<T>[];
+  items: ReadonlyRef<Resource<T>[]>;
 
 }
 
@@ -88,60 +87,59 @@ export function useCollection<T = any>(resourceLike: ResourceLike<any>, options?
 
   const { resource, error: resolveError } = useResolveResource(resourceLike);
 
-  const loading = ref(true);
-  const error = ref<null|Error>(null);
-  const items = ref<Resource<T>[]>([]);
+  const loading = shallowRef(true);
+  const error = shallowRef<null|Error>(null);
+  const items = shallowRef<Resource<T>[]>([]);
 
-  useEffect( () => {
-    if (resolveError) {
-      error.value = (resolveError);
-      loading.value = (false);
-      return;
+  watch(resource, (val, _old, onInvalidate) => {
+    if(!val) {
+      loading.value = true
+      items.value = []
+      return
     }
-    if (!resource) {
-      // No resource yet, lets wait for it.
-      loading.value = (true);
-      items.value = ([]);
-      return;
-    }
-    // Now we got a resource, let's find its children.
-    resource
-      .followAll(rel)
+
+    val.followAll(rel)
       .preferTransclude()
-      .then( result => {
-        items.value = (result);
-        loading.value = (false);
+      .then(result => {
+        items.value = result
+        loading.value = false
       })
       .catch(err => {
-        error.value = (err);
-        loading.value = (false);
+        error.value = err
+        loading.value = false
       });
 
     const updateHandler = (newState: ResourceState) => {
-      const newItems = newState.links.getMany(rel)
-        .map(link => resource.go(link.href));
-      items.value = (newItems);
+      const newItems = newState.links
+        .getMany(rel)
+        .map(link => val.go(link.href));
+
+      items.value = newItems
     };
 
     const staleHandler = () => {
       if (options?.refreshOnStale) {
-        resource
+        val
           .refresh()
           .catch(err => {
-            error.value = (err);
-          });
+            error.value = err
+          })
       }
     };
 
-    resource.on('update', updateHandler);
-    resource.on('stale', staleHandler);
+    val.on('update', updateHandler);
+    val.on('stale', staleHandler);
 
-    return function cleanup() {
-      resource.off('update', updateHandler);
-      resource.off('stale', staleHandler);
-    };
+    onInvalidate(function cleanup() {
+      val.off('update', updateHandler);
+      val.off('stale', staleHandler);
+    })
+  })
 
-  }, [resource, resolveError]);
+  watch(resolveError, val => {
+    error.value = val
+    loading.value = false
+  })
 
   return {
     loading,

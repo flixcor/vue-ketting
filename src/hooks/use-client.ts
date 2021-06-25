@@ -2,7 +2,7 @@ import { Client } from 'ketting';
 import { KettingClientKey } from '../config';
 import { getCurrentInstance  } from 'vue'
 
-export function useClient(): Client {
+export function useClient(): Readonly<Client> {
     const instance = getCurrentInstance() as any
     const client = instance?.provides[KettingClientKey]
     

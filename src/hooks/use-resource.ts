@@ -1,27 +1,30 @@
 import type { Client, State as ResourceState, } from 'ketting';
 import { HalState, Links, Resource, isState } from 'ketting'
-import { watch, readonly, computed, shallowRef } from 'vue'
+import { watch, computed, shallowRef } from 'vue'
+import type { Ref } from 'vue'
 import { useClient } from './use-client'
 import { useResolveResource } from './use-resolve-resource'
-import type { ReadonlyRef, ResourceLike } from '../util'
+import type { ResourceLike } from '../util'
 
-type UseResourceResponse<T> = {
+
+
+type UseResourceResponse<T> = Readonly<{
     // True if there is no data yet
-    loading: ReadonlyRef<boolean>,
-    error: ReadonlyRef<Error | null>;
+    loading: Readonly<Ref<boolean>>,
+    error: Readonly<Ref<Readonly<Error> | null>>;
     // A full Ketting State object
-    resourceState: ReadonlyRef<ResourceState<T> | undefined>;
+    resourceState: Readonly<Ref<Readonly<ResourceState<Readonly<T>>> | undefined>>;
     // Update the state
     setResourceState: (newState: ResourceState<T>) => void;
     // Send the state to the server via a PUT or POST request.
     submit: () => Promise<void>;
     // The 'data' part of the state.
-    data: ReadonlyRef<T | undefined>;
+    data: Readonly<Ref<Readonly<T> | undefined>>;
     // Update the data from the state.
     setData: (newData: T) => void;
     // The 'real' resource.
-    resource: ReadonlyRef<Resource<T> | undefined>;
-}
+    resource: Readonly<Ref<Readonly<Resource<T>> | undefined>>;
+}>
 
 export type UseResourceOptions<T> = {
     mode: 'PUT',
@@ -232,8 +235,8 @@ export function useResource<T>(arg1: ResourceLike<T> | UseResourceOptions<T> | s
                 setResourceState(newState)
             }
         },
-        data: readonly(data),
-        resourceState: readonly(resourceState),
+        data,
+        resourceState,
         loading,
         resource,
         error

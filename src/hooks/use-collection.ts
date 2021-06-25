@@ -1,7 +1,8 @@
 import { Resource, State as ResourceState } from 'ketting';
-import type { ReadonlyRef, ResourceLike  } from '../util'
+import type { ResourceLike  } from '../util'
 import { useResolveResource } from './use-resolve-resource';
 import { watch, shallowRef } from 'vue'
+import type { Ref } from 'vue'
 
 /**
  * The result of a useCollection hook.
@@ -11,19 +12,19 @@ type UseCollectionResponse<T> = {
   /**
    * True if there is no data or no error yet
    */
-  loading: ReadonlyRef<boolean>;
+  loading: Readonly<Ref<boolean>>;
 
   /**
    * Will contain an Error object if an error occurred anywhere in the
    */
-  error: ReadonlyRef<Error | null>;
+  error: Readonly<Ref<Readonly<Error> | null>>;
 
   /**
    * List of collection members.
    *
    * This starts off as an empty array.
    */
-  items: ReadonlyRef<Resource<T>[]>;
+  items: Readonly<Ref<Readonly<Readonly<Resource<T>>[]>>>;
 
 }
 

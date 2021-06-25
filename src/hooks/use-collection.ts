@@ -134,7 +134,7 @@ export function useCollection<T = any>(resourceLike: ResourceLike<any>, options?
       val.off('update', updateHandler);
       val.off('stale', staleHandler);
     })
-  })
+  }, { immediate: true })
 
   watch(resolveError, val => {
     error.value = val

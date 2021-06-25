@@ -96,10 +96,11 @@ export function useResource<T>(options: UseResourceOptions<T>): UseResourceRespo
 export function useResource<T>(arg1: ResourceLike<T> | UseResourceOptions<T> | string): UseResourceResponse<T> {
     const [resourceLike, mode, initialData, refreshOnStale] = getUseResourceOptions(arg1);
     const client = useClient();
-    const resourceState = shallowRef(useResourceState(resourceLike, initialData, client))
+    const initialResourceState = useResourceState(resourceLike, initialData, client);
+    const resourceState = shallowRef(initialResourceState)
     const { resource, error: resolveError } = useResolveResource(resourceLike)
     const data = computed(() => resourceState.value?.data)
-    const loading = shallowRef(true)
+    const loading = shallowRef<boolean>(!initialResourceState)
     const error = shallowRef<Error|null>(null)
     const modeVal = shallowRef(mode);
 

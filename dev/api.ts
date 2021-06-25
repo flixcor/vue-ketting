@@ -26,6 +26,32 @@ export default function useApiStub(){
                 const article = schema.find('article', id)
                 return article?.attrs || new Response(404)
             })
+            this.get('/api/article', (schema, request) => {
+                const all = schema.all('article').models
+                return request.requestHeaders.prefer
+                    ? {
+                        _embedded: {
+                            item: all.map(({id, title, body})=> ({
+                                _links: {
+                                    self: { href: `/api/article/${id}` }
+                                },
+                                id,
+                                title,
+                                body
+                            }))
+                        },
+                        _links: {
+                            self: {href: '/api/article'}
+                        }
+                    } : {
+                        _links: {
+                            self: {href: '/api/article'},
+                            item: all.map(({id})=> ({
+                                href: `/api/article/${id}`
+                            }))
+                        }
+                    }
+            })
             this.put('/api/article/:id', (schema, request) => {
                 const { id } = request.params
                 const article = schema.find('article', id)

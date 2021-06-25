@@ -16,10 +16,20 @@
 </template>
   
 <script setup lang="ts"> 
+import { defineProps } from 'vue'
 import { useResource } from '../src'
+import type { PropType } from 'vue'
 import type { Article } from './types'
+import type { Resource } from 'ketting'
 
-const { error, loading, setData, submit, data, resource } = useResource<Article>('/api/article/1')
+const props = defineProps({
+    resource: {
+        required: true,
+        type: Object as PropType<Resource<Article>>
+    }
+})
+
+const { error, loading, setData, submit, data, resource } = useResource(props.resource)
 
 function handleChange (ev: Event, prop: keyof Article) {
     const value = data.value

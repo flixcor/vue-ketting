@@ -28,11 +28,19 @@ type UseReadResourceResponse<T> = {
   resource: Ref<Resource<T> | undefined>;
 }
 
-export type UseReadResourceOptions<T> = {
+type PostOptions<T> = {
+    mode: 'POST',
+    initialState: ResourceState<T>        
+}
+
+type NonPostOptions<T> = {
+    mode?: 'PUT',
+    initialState?: ResourceState<T> 
+}
+
+export type UseReadResourceOptions<T> = (PostOptions<T> | NonPostOptions<T>) & {
   resource: ResourceLike<T>,
-  initialState?: ResourceState<T>,
   refreshOnStale?: boolean,
-  mode?: 'PUT' | 'POST'
 
   /**
    * HTTP headers to include if there was no existing cache, and the initial
@@ -41,7 +49,6 @@ export type UseReadResourceOptions<T> = {
    * These headers are not used on subsequent refreshes/stale cases.
    */
   initialGetRequestHeaders?: Record<string, string>;
-
 };
 
 /**
@@ -139,6 +146,18 @@ export function useReadResource<T>(options: UseReadResourceOptions<T>): UseReadR
                 loading.value = false
             });
   }, {immediate: true})
+
+    watch(error, val => {
+        if(val) {
+            loading.value = false
+        }
+    })
+
+    watch(resourceState, val => {
+        if(val) {
+            loading.value = false
+        }
+    })
 
   const result: UseReadResourceResponse<T> = {
     loading,

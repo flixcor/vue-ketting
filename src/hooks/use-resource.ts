@@ -4,7 +4,7 @@ import { watch, computed, shallowRef } from 'vue'
 import type { Ref } from 'vue'
 import { useClient } from './use-client'
 import type { ResourceLike } from '../util'
-import { useReadResource } from './use-read-resource';
+import { useReadResource, UseReadResourceOptions } from './use-read-resource';
 
 
 
@@ -97,31 +97,16 @@ export type UseResourceOptions<T> = {
 export function useResource<T>(resource: ResourceLike<T> | string): UseResourceResponse<T>;
 export function useResource<T>(options: UseResourceOptions<T>): UseResourceResponse<T>;
 export function useResource<T>(arg1: ResourceLike<T> | UseResourceOptions<T> | string): UseResourceResponse<T> {
-    const [resourceLike, mode, initialData, refreshOnStale] = getUseResourceOptions(arg1);
     const client = useClient();
-    const initialState = useResourceState(resourceLike, initialData, client);
-    const { resource, resourceState, loading, error } = useReadResource({
-        mode,
-        initialState,
-        resource: resourceLike,
-        refreshOnStale
-    })
+    const opts = getUseReadResourceOptions(arg1, client);
+    const { resource, resourceState, loading, error } = useReadResource(opts)
     const data = computed(() => resourceState.value?.data)
-    const modeVal = shallowRef(mode);
+    const modeVal = shallowRef(opts.mode || 'PUT');
 
     function setResourceState(newState: ResourceState<T>) {
         resourceState.value = newState.clone()
     }
-
-    watch(error, () => {
-        loading.value = false
-    })
-
-    watch(data, () => {
-        loading.value = false
-    })
-
-
+    
     return {
         async submit() {
             const stateVal = resourceState.value, resourceVal = resource.value
@@ -174,51 +159,35 @@ export function useResource<T>(arg1: ResourceLike<T> | UseResourceOptions<T> | s
 /**
  * A helper function to process the overloaded arguments of useResource, and return a consistent result
  */
-function getUseResourceOptions<T>(arg1: ResourceLike<T> | UseResourceOptions<T> | string): [Resource<T> | PromiseLike<Resource<T>> | string, 'POST' | 'PUT', T | ResourceState<T> | undefined, boolean] {
-
-    let mode: 'POST' | 'PUT';
-    let initialState;
-    let res;
-    let refreshOnStale;
-
-    if (isUseResourceOptions(arg1)) {
-        mode = arg1.mode;
-        initialState = arg1.initialState;
-        res = arg1.resource;
-        refreshOnStale = arg1.refreshOnStale ?? false;
-    } else {
-        mode = 'PUT';
-        initialState = undefined;
-        res = arg1;
-        refreshOnStale = false;
+function getUseReadResourceOptions<T>(arg1: ResourceLike<T> | UseResourceOptions<T> | string, client: Client): UseReadResourceOptions<T>  {
+    if (isUseResourceOptions<T>(arg1)) {
+        if(arg1.mode === 'POST') {
+            return {
+                ...arg1,
+                initialState: isState(arg1.initialState) 
+                    ? arg1.initialState 
+                    : dataToState(arg1.initialState, client)
+            }
+        }
+        
+        return {
+            ...arg1,
+            initialState: !arg1.initialState
+                ? undefined
+                : isState(arg1.initialState)
+                    ? arg1.initialState
+                    : dataToState(arg1.initialState, client)
+        }
     }
-
-    return [
-        res,
-        mode,
-        initialState,
-        refreshOnStale,
-    ];
-
+    
+    return {
+        mode: 'PUT',
+        initialState: undefined,
+        resource: arg1,
+        refreshOnStale: false,
+    }
 }
 
-/**
- * Internal helper hook to deal with setting up the resource state, and
- * populate the cache.
- */
-function useResourceState<T>(resourceLike: ResourceLike<T>, initialData: undefined | T | ResourceState<T>, client: Client): ResourceState<T> | undefined {
-
-
-    if (initialData) {
-        return isState(initialData) ? initialData : dataToState(initialData, client);
-    } else if (resourceLike instanceof Resource) {
-        return client.cache.get(resourceLike.uri) || undefined;
-    } else if (typeof resourceLike === 'string') {
-        return client.cache.get(resourceLike) || undefined
-    }
-
-
-}
 
 function isUseResourceOptions<T>(input: any | UseResourceOptions<T>): input is UseResourceOptions<T> {
 

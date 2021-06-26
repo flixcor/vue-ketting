@@ -159,24 +159,18 @@ export function useResource<T>(arg1: ResourceLike<T> | UseResourceOptions<T> | s
 /**
  * A helper function to process the overloaded arguments of useResource, and return a consistent result
  */
-function getUseReadResourceOptions<T>(arg1: ResourceLike<T> | UseResourceOptions<T> | string, client: Client): UseReadResourceOptions<T>  {
+function getUseReadResourceOptions<T>(arg1: ResourceLike<T> | UseResourceOptions<T>, client: Client): UseReadResourceOptions<T>  {
     if (isUseResourceOptions<T>(arg1)) {
         if(arg1.mode === 'POST') {
             return {
                 ...arg1,
-                initialState: isState(arg1.initialState) 
-                    ? arg1.initialState 
-                    : dataToState(arg1.initialState, client)
+                initialState: dataToState(arg1.initialState, client)
             }
         }
         
         return {
             ...arg1,
-            initialState: !arg1.initialState
-                ? undefined
-                : isState(arg1.initialState)
-                    ? arg1.initialState
-                    : dataToState(arg1.initialState, client)
+            initialState: arg1.initialState && dataToState(arg1.initialState, client)
         }
     }
     
@@ -201,9 +195,9 @@ function isUseResourceOptions<T>(input: any | UseResourceOptions<T>): input is U
  * For now this will always return a HalState object, because it's a
  * reasonable default, but this may change in the future.
  */
-function dataToState<T>(data: T, client: Client): ResourceState<T> {
+function dataToState<T>(data: T | ResourceState<T>, client: Client): ResourceState<T> {
 
-    return new HalState({
+    return isState(data) ? data : new HalState({
         uri: 'about:blank' + Math.random(),
         client,
         data,

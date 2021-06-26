@@ -99,6 +99,8 @@ export function useCollection<T = any>(resourceLike: ResourceLike<any>, options?
   watch(resourceState, val => {
     if(!val) return
     items.value = val.followAll(rel)
+  }, {
+    immediate: true
   })
 
   return {

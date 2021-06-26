@@ -1,6 +1,6 @@
 import type { Client, State as ResourceState, } from 'ketting';
 import { HalState, Links, Resource, isState } from 'ketting'
-import { watch, computed, shallowRef } from 'vue'
+import { computed, shallowRef } from 'vue'
 import type { Ref } from 'vue'
 import { useClient } from './use-client'
 import type { ResourceLike } from '../util'

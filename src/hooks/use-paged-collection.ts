@@ -96,7 +96,7 @@ export function usePagedCollection<T = any>(resourceLike: ResourceLike<any>, opt
   watch(resourceState, val => {
     if (!val) return;
     items.value = [...items.value, ...val.followAll(rel)]
-  });
+  }, { immediate: true });
 
 
   const hasNextPage = computed(() => {

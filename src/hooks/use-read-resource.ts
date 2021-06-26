@@ -32,7 +32,7 @@ export type UseReadResourceOptions<T> = {
   resource: ResourceLike<T>,
   initialState?: ResourceState<T>,
   refreshOnStale?: boolean,
-  mode?: 'PUT' | 'POST' | 'GET'
+  mode?: 'PUT' | 'POST'
 
   /**
    * HTTP headers to include if there was no existing cache, and the initial

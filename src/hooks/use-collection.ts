@@ -24,7 +24,7 @@ type UseCollectionResponse<T> = {
    *
    * This starts off as an empty array.
    */
-  items: Readonly<Ref<Readonly<Readonly<Resource<T>>[]>>>;
+  items: Readonly<Ref<Readonly<Array<Resource<T>>>>>;
 
 }
 

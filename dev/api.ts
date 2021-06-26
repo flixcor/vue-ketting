@@ -61,7 +61,7 @@ export default function useApiStub(){
                     next: next && {href: '/api/article?page=' + next},
                     previous: previous && {href: '/api/article?page=' + previous}
                 }
-                return request.requestHeaders.prefer
+                return shouldEmbed(request)
                     ? {
                         _embedded: {
                             item: page.map(({id, title, body})=> ({

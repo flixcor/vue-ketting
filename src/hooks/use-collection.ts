@@ -3,6 +3,7 @@ import type { ResourceLike  } from '../util'
 import { useResolveResource } from './use-resolve-resource';
 import { watch, shallowRef } from 'vue'
 import type { Ref } from 'vue'
+import { useReadResource } from './use-read-resource';
 
 /**
  * The result of a useCollection hook.
@@ -86,60 +87,19 @@ export function useCollection<T = any>(resourceLike: ResourceLike<any>, options?
 
   const rel = options?.rel || 'item';
 
-  const { resource, error: resolveError } = useResolveResource(resourceLike);
+  const { resourceState, loading, error } = useReadResource({
+    resource: resourceLike,
+    refreshOnStale: options?.refreshOnStale,
+    initialGetRequestHeaders: {
+      Prefer: 'transclude=' + rel,
+    }
+  })
 
-  const loading = shallowRef(true);
-  const error = shallowRef<null|Error>(null);
   const items = shallowRef<Resource<T>[]>([]);
 
-  watch(resource, (val, _old, onInvalidate) => {
-    if(!val) {
-      loading.value = true
-      items.value = []
-      return
-    }
-
-    val.followAll(rel)
-      .preferTransclude()
-      .then(result => {
-        items.value = result
-        loading.value = false
-      })
-      .catch(err => {
-        error.value = err
-        loading.value = false
-      });
-
-    const updateHandler = (newState: ResourceState) => {
-      const newItems = newState.links
-        .getMany(rel)
-        .map(link => val.go(link.href));
-
-      items.value = newItems
-    };
-
-    const staleHandler = () => {
-      if (options?.refreshOnStale) {
-        val
-          .refresh()
-          .catch(err => {
-            error.value = err
-          })
-      }
-    };
-
-    val.on('update', updateHandler);
-    val.on('stale', staleHandler);
-
-    onInvalidate(function cleanup() {
-      val.off('update', updateHandler);
-      val.off('stale', staleHandler);
-    })
-  }, { immediate: true })
-
-  watch(resolveError, val => {
-    error.value = val
-    loading.value = false
+  watch(resourceState, val => {
+    if(!val) return
+    items.value = val.followAll(rel)
   })
 
   return {

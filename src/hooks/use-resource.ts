@@ -3,8 +3,8 @@ import { HalState, Links, Resource, isState } from 'ketting'
 import { watch, computed, shallowRef } from 'vue'
 import type { Ref } from 'vue'
 import { useClient } from './use-client'
-import { useResolveResource } from './use-resolve-resource'
 import type { ResourceLike } from '../util'
+import { useReadResource } from './use-read-resource';
 
 
 
@@ -99,77 +99,19 @@ export function useResource<T>(options: UseResourceOptions<T>): UseResourceRespo
 export function useResource<T>(arg1: ResourceLike<T> | UseResourceOptions<T> | string): UseResourceResponse<T> {
     const [resourceLike, mode, initialData, refreshOnStale] = getUseResourceOptions(arg1);
     const client = useClient();
-    const initialResourceState = useResourceState(resourceLike, initialData, client);
-    const resourceState = shallowRef(initialResourceState)
-    const { resource, error: resolveError } = useResolveResource(resourceLike)
+    const initialState = useResourceState(resourceLike, initialData, client);
+    const { resource, resourceState, loading, error } = useReadResource({
+        mode,
+        initialState,
+        resource: resourceLike,
+        refreshOnStale
+    })
     const data = computed(() => resourceState.value?.data)
-    const loading = shallowRef<boolean>(!initialResourceState)
-    const error = shallowRef<Error|null>(null)
     const modeVal = shallowRef(mode);
 
     function setResourceState(newState: ResourceState<T>) {
         resourceState.value = newState.clone()
     }
-
-    function setError(err: Error|null) {
-        error.value = err
-    }
-
-    watch(resolveError, setError)
-
-    watch(resource, (value, _, onInvalidate) => {
-        // This effect is for setting up the onUpdate event
-        if (mode === 'POST' || !value) {
-            return;
-        }
-
-        const onStale = () => {
-            if (refreshOnStale) {
-                value.refresh()
-                    .catch(setError);
-            }
-        };
-
-        value.on('update', setResourceState);
-        value.on('stale', onStale);
-
-        onInvalidate(function unmount() {
-            value.off('update', setResourceState);
-            value.off('stale', onStale);
-        })
-    }, { immediate: true })
-
-    watch(resource, value => {
-        // This effect is for fetching the initial ResourceState
-        if (!value || modeVal.value === 'POST') {
-            // No need to fetch resourceState for these cases.
-            return;
-        }
-        
-        const state = resourceState.value
-
-        if (state && state.uri === value.uri) {
-            // Don't do anything if we already have a resourceState, and the
-            // resourceState's uri matches what we got.
-            //
-            // This likely means we got the resourceState from the initial
-            // useResourceState hook.
-            return;
-        }
-
-        // The 'resource' property has changed, so lets get the new resourceState and data.
-        const cachedState = value.client.cache.get(value.uri);
-        if (cachedState) {
-            setResourceState(cachedState)
-            return;
-        }
-
-        loading.value = true
-
-        value.get()
-            .then(setResourceState)
-            .catch(setError);
-    }, { immediate: true })
 
     watch(error, () => {
         loading.value = false
@@ -179,20 +121,6 @@ export function useResource<T>(arg1: ResourceLike<T> | UseResourceOptions<T> | s
         loading.value = false
     })
 
-
-    if (resourceLike instanceof Resource) {
-        resource.value = resourceLike
-    } else if (typeof resourceLike === 'string') {
-        try {
-            resource.value = client.go<T>(resourceLike)
-        } catch (err) {
-            setError(err)
-        }
-    } else {
-        Promise.resolve(resourceLike).then(newRes => {
-            resource.value = newRes
-        }).catch(setError);
-    }
 
     return {
         async submit() {

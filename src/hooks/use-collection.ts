@@ -1,6 +1,5 @@
 import { Resource, State as ResourceState } from 'ketting';
 import type { ResourceLike  } from '../util'
-import { useResolveResource } from './use-resolve-resource';
 import { watch, shallowRef } from 'vue'
 import type { Ref } from 'vue'
 import { useReadResource } from './use-read-resource';

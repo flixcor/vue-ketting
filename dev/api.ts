@@ -1,6 +1,28 @@
-import { createServer, Model, Factory, Response } from 'miragejs'
+import { createServer, Model, Factory, Response, Request } from 'miragejs'
 import type { Article } from './types'
 import { lorem } from "faker";
+
+const pageSize = 5
+function getPage<T>(items: T[], pageNumber: number) : {previous?: number, next?: number, page: T[]} {
+    const start = (pageNumber -1) * pageSize
+    const end = pageNumber * pageSize
+    const pagePlusOne = items.filter((_x,i) => i >= start && i <= end)
+    const next = pagePlusOne.length > pageSize ? (pageNumber + 1) : undefined
+    const page = pagePlusOne.filter((_x,i) => i < pageSize)
+    const previous = pageNumber > 1 ? pageNumber -1 : undefined
+    return {
+        page,
+        next,
+        previous
+    }
+}
+
+function parsePageNumber(request: Request): number{
+    const parseInt = Number.parseInt(request.queryParams.page,10)
+    return isNaN(parseInt) || parseInt < 1
+        ? 1
+        : parseInt
+}
 
 export default function useApiStub(){
     return createServer({
@@ -27,11 +49,17 @@ export default function useApiStub(){
                 return article?.attrs || new Response(404)
             })
             this.get('/api/article', (schema, request) => {
-                const all = schema.all('article').models
+                const pageNumber = parsePageNumber(request)
+                const {page, next, previous} = getPage(schema.all('article').models, pageNumber)
+                const links = {
+                    self: {href: '/api/article?page=' + pageNumber},
+                    next: next && {href: '/api/article?page=' + next},
+                    previous: previous && {href: '/api/article?page=' + previous}
+                }
                 return request.requestHeaders.prefer
                     ? {
                         _embedded: {
-                            item: all.map(({id, title, body})=> ({
+                            item: page.map(({id, title, body})=> ({
                                 _links: {
                                     self: { href: `/api/article/${id}` }
                                 },
@@ -40,13 +68,11 @@ export default function useApiStub(){
                                 body
                             }))
                         },
-                        _links: {
-                            self: {href: '/api/article'}
-                        }
+                        _links: links
                     } : {
                         _links: {
-                            self: {href: '/api/article'},
-                            item: all.map(({id})=> ({
+                            ...links,
+                            item: page.map(({id})=> ({
                                 href: `/api/article/${id}`
                             }))
                         }

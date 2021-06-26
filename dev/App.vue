@@ -1,6 +1,6 @@
 <template>
   <KettingProvider :client="client">
-    <ArticleCollection />
+    <!-- <ArticleCollection /> -->
     <ArticleCollection />
   </KettingProvider>
 </template>

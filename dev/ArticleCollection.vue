@@ -7,12 +7,13 @@
         </li>
     </ul>
     <div v-else>{{ 'something went horribly wrong' }}</div>
+    <button v-if="hasNextPage" type="button" @click="loadNextPage">Next page</button>
 </template>
 
 <script setup lang="ts">
-import { useCollection } from '../src'
+import { usePagedCollection } from '../src'
 import type { Article } from './types'
 import ArticleCollectionItem from './ArticleCollectionItem.vue'
 
-const { error, loading, items } = useCollection<Article>('/api/article')
+const { error, loading, items, hasNextPage, loadNextPage } = usePagedCollection<Article>('/api/article')
 </script>

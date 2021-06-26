@@ -24,6 +24,11 @@ function parsePageNumber(request: Request): number{
         : parseInt
 }
 
+function shouldEmbed(request: Request): boolean {
+    const { prefer } = request.requestHeaders
+    return !!prefer && prefer.includes('transclude=item')
+}
+
 export default function useApiStub(){
     return createServer({
         models: {

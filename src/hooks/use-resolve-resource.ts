@@ -17,18 +17,23 @@ export function useResolveResource<T>(resourceLike: ResourceLike<T>|string): Use
 
   const client = useClient();
   const quick = quickResolve(client, resourceLike)
-  const resource = shallowRef(quick);
+  const resource = shallowRef<Resource<T> | undefined>();
   const error = shallowRef<Error | null>(null);
 
-  if(!quick) {
+  if(quick) {
+    setTimeout(() => {
+      resource.value = quick
+    })
+  } else {
     Promise.resolve(resourceLike as PromiseLike<Resource<T>>)
-      .then(newVal => {
-        resource.value = newVal
-      })
-      .catch(err => {
-        error.value = err
-      })
+        .then(newVal => {
+          resource.value = newVal
+        })
+        .catch(err => {
+          error.value = err
+        })
   }
+  
   return {
     resource,
     error

@@ -2,6 +2,10 @@
     <p v-if="loading">Loading...</p>
     <template v-else-if="data">
         <label>
+            Id
+            <span>{{ data.id }}</span>
+        </label>
+        <label>
             Title
             <input :value="data.title" @change="handleTitle" >
         </label>

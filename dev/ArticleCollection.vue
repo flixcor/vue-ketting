@@ -14,5 +14,5 @@ import { usePagedCollection } from '../src'
 import type { Article } from './types'
 import ArticleCollectionItem from './ArticleCollectionItem.vue'
 
-const { error, loading, items, hasNextPage, loadNextPage } = usePagedCollection<Article>('/api/article')
+const { error, loading, items, hasNextPage, loadNextPage } = usePagedCollection<Article>('/api/article?page=1')
 </script>

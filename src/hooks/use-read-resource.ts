@@ -91,7 +91,6 @@ export function useReadResource<T>(options: UseReadResourceOptions<T>): UseReadR
 
       const onUpdate = (newState: ResourceState<T>) => {
         resourceState.value = newState.clone()
-        loading.value = false
       };
 
       const onStale = () => {
@@ -111,7 +110,7 @@ export function useReadResource<T>(options: UseReadResourceOptions<T>): UseReadR
         val.off('update', onUpdate);
         val.off('stale', onStale);
       })
-  }, {immediate: true})
+  })
 
   watch(resource, val => {
       // This effect is for fetching the initial ResourceState
@@ -129,7 +128,6 @@ export function useReadResource<T>(options: UseReadResourceOptions<T>): UseReadR
       const cachedState = val.client.cache.get(val.uri);
         if (cachedState) {
             resourceState.value = cachedState
-            loading.value = false
             return;
         } 
         
@@ -137,15 +135,10 @@ export function useReadResource<T>(options: UseReadResourceOptions<T>): UseReadR
         loading.value = true
 
         val.get({ headers: options.initialGetRequestHeaders })
-            .then(newState => {
-                resourceState.value = newState.clone()
-                loading.value = false
-            })
             .catch(err => {
                 error.value = err
-                loading.value = false
             });
-  }, {immediate: true})
+  })
 
     watch(error, val => {
         if(val) {
@@ -190,9 +183,9 @@ function useResourceState<T>(
   const theRef = shallowRef<ResourceState<T>| undefined>(data)
 
   watch(resource, val => {
-      if(!val) return
-      theRef.value = client.cache.get(val.uri) || initialData
-  })
+    if(!val) return
+    theRef.value = client.cache.get(val.uri) || initialData
+})
 
   return {resourceState: theRef, loading}
 }

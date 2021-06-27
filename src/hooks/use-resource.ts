@@ -1,29 +1,29 @@
-import type { Client, State as ResourceState, } from 'ketting';
+import type { Client, State as ResourceState, } from 'ketting'
 import { HalState, Links, Resource, isState } from 'ketting'
 import { computed, shallowRef } from 'vue'
 import type { Ref } from 'vue'
 import { useClient } from './use-client'
 import type { ResourceLike } from '../util'
-import { useReadResource, UseReadResourceOptions } from './use-read-resource';
+import { useReadResource, UseReadResourceOptions } from './use-read-resource'
 
 
 
 type UseResourceResponse<T> = Readonly<{
   // True if there is no data yet
   loading: Readonly<Ref<boolean>>,
-  error: Readonly<Ref<Readonly<Error> | null>>;
+  error: Readonly<Ref<Readonly<Error> | null>>,
   // A full Ketting State object
-  resourceState: Readonly<Ref<Readonly<ResourceState<Readonly<T>>> | undefined>>;
+  resourceState: Readonly<Ref<Readonly<ResourceState<Readonly<T>>> | undefined>>,
   // Update the state
-  setResourceState: (newState: ResourceState<T>) => void;
+  setResourceState: (newState: ResourceState<T>) => void,
   // Send the state to the server via a PUT or POST request.
-  submit: () => Promise<void>;
+  submit: () => Promise<void>,
   // The 'data' part of the state.
-  data: Readonly<Ref<Readonly<T> | undefined>>;
+  data: Readonly<Ref<Readonly<T> | undefined>>,
   // Update the data from the state.
-  setData: (newData: T) => void;
+  setData: (newData: T) => void,
   // The 'real' resource.
-  resource: Readonly<Ref<Readonly<Resource<T>> | undefined>>;
+  resource: Readonly<Ref<Readonly<Resource<T>> | undefined>>,
 }>
 
 export type UseResourceOptions<T> = {
@@ -51,7 +51,7 @@ export type UseResourceOptions<T> = {
  *   resourceState,
  *   setResourceState,
  *   submit
- *  } = useResource(resource);
+ *  } = useResource(resource)
  * </pre>
  *
  * Returned properties:
@@ -88,39 +88,34 @@ export type UseResourceOptions<T> = {
  *  resource: resource,
  *  mode: 'POST',
  *  initialState: { foo: bar, title: 'New article!' }
- *  });
+ *  })
  * </pre>
  *
  * To do POST requests you must specifiy initialState with the state the user starts
  * off with.
  */
-export function useResource<T>(resource: ResourceLike<T> | string): UseResourceResponse<T>;
-export function useResource<T>(options: UseResourceOptions<T>): UseResourceResponse<T>;
+export function useResource<T>(resource: ResourceLike<T> | string): UseResourceResponse<T>
+export function useResource<T>(options: UseResourceOptions<T>): UseResourceResponse<T>
 export function useResource<T>(arg1: ResourceLike<T> | UseResourceOptions<T> | string): UseResourceResponse<T> {
-  const client = useClient();
-  const opts = getUseReadResourceOptions(arg1, client);
+  const client = useClient()
+  const opts = getUseReadResourceOptions(arg1, client)
   const { resource, resourceState, loading, error } = useReadResource(opts)
   const data = computed(() => resourceState.value?.data)
-  const modeVal = shallowRef(opts.mode || 'PUT');
-
-  function setResourceState(newState: ResourceState<T>) {
-    resourceState.value = newState.clone()
-  }
 
   return {
     async submit() {
       const stateVal = resourceState.value, resourceVal = resource.value
 
       if (!stateVal || !resourceVal) {
-        throw new Error('Too early to call submit()');
+        throw new Error('Too early to call submit()')
       }
 
-      if (modeVal.value === 'POST') {
-        const newResource = await resourceVal.postFollow(stateVal);
-        resource.value = newResource;
-        modeVal.value = 'PUT';
+      if (opts.mode === 'POST') {
+        const newResource = await resourceVal.postFollow(stateVal)
+        opts.mode = 'PUT'
+        resource.value = newResource
       } else {
-        await resourceVal.put(stateVal as any);
+        await resourceVal.put(stateVal)
       }
     },
     setData(newData: T) {
@@ -128,24 +123,24 @@ export function useResource<T>(arg1: ResourceLike<T> | UseResourceOptions<T> | s
         resourceVal = resource.value
 
       if (!stateVal || !resourceVal) {
-        throw new Error('Too early to call setData, we don\'t have a current state to update');
+        throw new Error('Too early to call setData, we don\'t have a current state to update')
       }
       stateVal.data = newData
-      if (modeVal.value === 'PUT') {
-        resourceVal.updateCache(stateVal as any);
+      if (opts.mode === 'PUT') {
+        resourceVal.updateCache(stateVal)
       } else {
-        resourceState.value = stateVal
+        resourceState.value = stateVal.clone()
       }
     },
     setResourceState(newState: ResourceState<T>) {
       const resourceVal = resource.value
       if (!resourceVal) {
-        throw new Error('Too early to call setResourceState, we don\'t have a current state to update');
+        throw new Error('Too early to call setResourceState, we don\'t have a current state to update')
       }
-      if (modeVal.value === 'PUT') {
-        resourceVal.updateCache(newState);
+      if (opts.mode === 'PUT') {
+        resourceVal.updateCache(newState)
       } else {
-        setResourceState(newState)
+        resourceState.value = newState.clone()
       }
     },
     data,
@@ -184,7 +179,7 @@ function getUseReadResourceOptions<T>(arg1: ResourceLike<T> | UseResourceOptions
 
 
 function isUseResourceOptions<T>(input: any | UseResourceOptions<T>): input is UseResourceOptions<T> {
-  return input.mode === 'PUT' || input.mode === 'POST';
+  return input.mode === 'PUT' || input.mode === 'POST'
 }
 
 /**
@@ -200,5 +195,5 @@ function dataToState<T>(data: T | ResourceState<T>, client: Client): ResourceSta
     data,
     headers: new Headers(),
     links: new Links('about:blank'),
-  });
+  })
 }

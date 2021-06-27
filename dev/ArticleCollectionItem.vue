@@ -42,27 +42,45 @@
 <script setup lang="ts"> 
 import { defineProps } from 'vue'
 import { useResource } from '../src'
+import type { UseResourceOptions } from '../src'
 import type { PropType } from 'vue'
 import type { Article } from './types'
 import type { Resource } from 'ketting'
 
 const props = defineProps({
-    resource: {
-        required: true,
-        type: Object as PropType<Resource<Article>>
-    }
+  collectionUri: {
+    type: String,
+    required: true,
+  },
+  resource: {
+    default: undefined,
+    type: Object as PropType<Resource<Article> | undefined>
+  }
 })
 
-const { error, loading, setData, submit, data, resource } = useResource(props.resource)
+const options: UseResourceOptions<Article> = props.resource
+  ? {
+    mode: 'PUT',
+    resource: props.resource,
+    refreshOnStale: true,
+  }
+  : {
+    resource: props.collectionUri,
+    mode: 'POST',
+    refreshOnStale: true,
+    initialState: { title: '', body: '' }
+  }
+
+const { error, loading, setData, submit, data, resource, resourceState } = useResource(options)
 
 function handleChange (ev: Event, prop: keyof Article) {
-    const value = data.value
-    if(!value) return
-    const input = ev.target as HTMLInputElement
-    setData({
-        ...value,
-        [prop]: input.value
-    })
+  const value = data.value
+  if(!value) return
+  const input = ev.target as HTMLInputElement
+  setData({
+    ...value,
+    [prop]: input.value
+  })
 }
 
 const handleTitle = (ev: Event) => handleChange(ev, 'title')

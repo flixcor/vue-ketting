@@ -1,23 +1,23 @@
-import { Resource, State as ResourceState } from 'ketting';
-import { shallowRef, watch, computed } from 'vue';
+import { Resource, State as ResourceState } from 'ketting'
+import { shallowRef, watch, computed } from 'vue'
 import type { Ref } from 'vue'
-import { ResourceLike } from '../util';
-import { useClient } from './use-client';
-import { Client } from 'ketting';
-import { useResolveResource } from './use-resolve-resource';
+import { ResourceLike } from '../util'
+import { useClient } from './use-client'
+import { Client } from 'ketting'
+import { useResolveResource } from './use-resolve-resource'
 
 type UseReadResourceResponse<T> = {
 
   // True if there is no data yet
-  loading: Ref<boolean>;
-  error: Ref<Error | null>;
+  loading: Ref<boolean>
+  error: Ref<Error | null>
 
   /**
    * The ResourceState.
    *
    * Note that this will be `null` until loading is "false".
    */
-  resourceState: Ref<ResourceState<T> | undefined>;
+  resourceState: Ref<ResourceState<T> | undefined>
 
   /**
    * The 'real' resource.
@@ -25,11 +25,11 @@ type UseReadResourceResponse<T> = {
    * This will be `null` until we have it. It's not typed null because it
    * makes it very clumsy to work with the hook.
    */
-  resource: Ref<Resource<T> | undefined>;
+  resource: Ref<Resource<T> | undefined>
 }
 
 type PostOptions<T> = {
-  mode: 'POST',
+  mode: 'POST' | 'PUT',
   initialState: ResourceState<T>
 }
 
@@ -48,8 +48,8 @@ export type UseReadResourceOptions<T> = (PostOptions<T> | NonPostOptions<T>) & {
    *
    * These headers are not used on subsequent refreshes/stale cases.
    */
-  initialGetRequestHeaders?: Record<string, string>;
-};
+  initialGetRequestHeaders?: Record<string, string>
+}
 
 /**
  * The useReadResource hook is an internal hook that helps setting up a lot of
@@ -65,7 +65,7 @@ export type UseReadResourceOptions<T> = (PostOptions<T> | NonPostOptions<T>) & {
  *     loading,
  *     error,
  *     resourceState,
- *  } = useResource(resource);
+ *  } = useResource(resource)
  * </pre>
  *
  * Returned properties:
@@ -78,43 +78,41 @@ export type UseReadResourceOptions<T> = (PostOptions<T> | NonPostOptions<T>) & {
  */
 export function useReadResource<T>(options: UseReadResourceOptions<T>): UseReadResourceResponse<T> {
 
-  const { resource } = useResolveResource(options.resource);
-  const { initialState, refreshOnStale, mode } = options
-  const client = useClient();
-
-  const { resourceState, loading } = useResourceState(resource, initialState, client);
-  const error = shallowRef<null | Error>(null);
+  const { resource } = useResolveResource(options.resource)
+  const client = useClient()
+  const { resourceState, loading } = useResourceState(resource, options.initialState, client)
+  const error = shallowRef<null | Error>(null)
 
   watch(resource, (val, _oldVal, onInvalidate) => {
     // This effect is for setting up the onUpdate event
-    if (!val || mode === 'POST') return
+    if (!val || options.mode === 'POST') return
 
     const onUpdate = (newState: ResourceState<T>) => {
       resourceState.value = newState.clone()
-    };
+    }
 
     const onStale = () => {
-      if (refreshOnStale) {
+      if (options.refreshOnStale) {
         val
           .refresh()
           .catch(err => {
-            error.value = err;
-          });
+            error.value = err
+          })
       }
-    };
+    }
 
-    val.on('update', onUpdate);
-    val.on('stale', onStale);
+    val.on('update', onUpdate)
+    val.on('stale', onStale)
 
     onInvalidate(function unmount() {
-      val.off('update', onUpdate);
-      val.off('stale', onStale);
+      val.off('update', onUpdate)
+      val.off('stale', onStale)
     })
   })
 
   watch(resource, val => {
     // This effect is for fetching the initial ResourceState
-    if (!val) return
+    if (!val || options.mode === 'POST') return
     const state = resourceState.value
 
     // Don't do anything if we already have a resourceState, and the
@@ -125,19 +123,19 @@ export function useReadResource<T>(options: UseReadResourceOptions<T>): UseReadR
     if (state && state.uri === val.uri) return
 
     // The 'resource' property has changed, so lets get the new resourceState and data.
-    const cachedState = val.client.cache.get(val.uri);
+    const cachedState = val.client.cache.get(val.uri)
     if (cachedState) {
       resourceState.value = cachedState
-      return;
+      return
     }
 
-    resourceState.value = undefined;
+    resourceState.value = undefined
     loading.value = true
 
     val.get({ headers: options.initialGetRequestHeaders })
       .catch(err => {
         error.value = err
-      });
+      })
   })
 
   watch(error, val => {
@@ -157,9 +155,9 @@ export function useReadResource<T>(options: UseReadResourceOptions<T>): UseReadR
     error,
     resourceState,
     resource,
-  };
+  }
 
-  return result;
+  return result
 
 }
 
@@ -181,11 +179,6 @@ function useResourceState<T>(
   const loading = shallowRef(!data)
 
   const theRef = shallowRef<ResourceState<T> | undefined>(data)
-
-  watch(resource, val => {
-    if (!val) return
-    theRef.value = client.cache.get(val.uri) || initialData
-  })
 
   return { resourceState: theRef, loading }
 }

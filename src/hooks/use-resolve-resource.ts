@@ -1,6 +1,6 @@
-import { useClient } from './use-client';
-import type { ResourceLike } from '../util';
-import { Resource, Client } from 'ketting';
+import { useClient } from './use-client'
+import type { ResourceLike } from '../util'
+import { Resource, Client } from 'ketting'
 import { shallowRef } from 'vue'
 import type { Ref } from 'vue'
 
@@ -15,10 +15,10 @@ type UseResolveResourceResult<T> = {
  */
 export function useResolveResource<T>(resourceLike: ResourceLike<T> | string): UseResolveResourceResult<T> {
 
-  const client = useClient();
+  const client = useClient()
   const quick = quickResolve(client, resourceLike)
-  const resource = shallowRef<Resource<T> | undefined>();
-  const error = shallowRef<Error | null>(null);
+  const resource = shallowRef<Resource<T> | undefined>()
+  const error = shallowRef<Error | null>(null)
 
   if (quick) {
     setTimeout(() => {
@@ -37,7 +37,7 @@ export function useResolveResource<T>(resourceLike: ResourceLike<T> | string): U
   return {
     resource,
     error
-  };
+  }
 }
 
 /**
@@ -47,10 +47,10 @@ export function useResolveResource<T>(resourceLike: ResourceLike<T> | string): U
 function quickResolve<T>(client: Client, resourceLike: ResourceLike<T>): Resource<T> | undefined {
 
   if (typeof resourceLike === 'string') {
-    return client.go(resourceLike);
+    return client.go(resourceLike)
   }
   if (resourceLike instanceof Resource) {
-    return resourceLike;
+    return resourceLike
   }
 
 }

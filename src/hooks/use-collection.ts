@@ -1,8 +1,8 @@
-import { Resource, State as ResourceState } from 'ketting';
+import { Resource, State as ResourceState } from 'ketting'
 import type { ResourceLike } from '../util'
 import { watch, shallowRef } from 'vue'
 import type { Ref } from 'vue'
-import { useReadResource } from './use-read-resource';
+import { useReadResource } from './use-read-resource'
 
 /**
  * The result of a useCollection hook.
@@ -12,19 +12,19 @@ type UseCollectionResponse<T> = {
   /**
    * True if there is no data or no error yet
    */
-  loading: Readonly<Ref<boolean>>;
+  loading: Readonly<Ref<boolean>>
 
   /**
    * Will contain an Error object if an error occurred anywhere in the
    */
-  error: Readonly<Ref<Readonly<Error> | null>>;
+  error: Readonly<Ref<Readonly<Error> | null>>
 
   /**
    * List of collection members.
    *
    * This starts off as an empty array.
    */
-  items: Readonly<Ref<Readonly<Array<Resource<T>>>>>;
+  items: Readonly<Ref<Readonly<Array<Resource<T>>>>>
 
 }
 
@@ -39,7 +39,7 @@ export type UseCollectionOptions = {
    *
    * Change this option to follow a list of other links.
    */
-  rel?: string;
+  rel?: string
 
   /**
    * If the collection receives 'stale' events and this is set to true,
@@ -48,7 +48,7 @@ export type UseCollectionOptions = {
    * 'stale' events are emitted by a number of different processes, such as
    * unsafe methods on the collection, or even manually triggered.
    */
-  refreshOnStale?: boolean;
+  refreshOnStale?: boolean
 }
 
 /**
@@ -68,7 +68,7 @@ export type UseCollectionOptions = {
  *     loading,
  *     error,
  *     items
- *  } = useResource<Article>(resource);
+ *  } = useResource<Article>(resource)
  * </pre>
  *
  * The resource may be passed as a Resource object, a Promise<Resource>, or a
@@ -84,7 +84,7 @@ export type UseCollectionOptions = {
  */
 export function useCollection<T = any>(resourceLike: ResourceLike<any>, options?: UseCollectionOptions): UseCollectionResponse<T> {
 
-  const rel = options?.rel || 'item';
+  const rel = options?.rel || 'item'
 
   const { resourceState, loading, error } = useReadResource({
     resource: resourceLike,
@@ -94,7 +94,7 @@ export function useCollection<T = any>(resourceLike: ResourceLike<any>, options?
     }
   })
 
-  const items = shallowRef<Resource<T>[]>([]);
+  const items = shallowRef<Resource<T>[]>([])
 
   watch(resourceState, val => {
     if (!val) return
@@ -107,6 +107,6 @@ export function useCollection<T = any>(resourceLike: ResourceLike<any>, options?
     loading,
     error,
     items,
-  };
+  }
 
 }

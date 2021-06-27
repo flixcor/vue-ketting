@@ -1,9 +1,9 @@
-import { Resource } from 'ketting';
-import { ResourceLike } from '../util';
-import { UseCollectionOptions } from './use-collection';
-import { shallowRef, watch, computed } from 'vue';
+import { Resource } from 'ketting'
+import { ResourceLike } from '../util'
+import { UseCollectionOptions } from './use-collection'
+import { shallowRef, watch, computed } from 'vue'
 import type { Ref } from 'vue'
-import { useReadResource } from './use-read-resource';
+import { useReadResource } from './use-read-resource'
 
 /**
  * The result of a useCollection hook.
@@ -13,30 +13,30 @@ type UsePagedCollectionResponse<T> = {
   /**
    * True if we are loading the initial page, or additional pages.
    */
-  loading: Readonly<Ref<boolean>>;
+  loading: Readonly<Ref<boolean>>
 
   /**
    * Will contain an Error object if an error occurred anywhere in the
    */
-  error: Readonly<Ref<Error | null>>;
+  error: Readonly<Ref<Error | null>>
 
   /**
    * List of collection members.
    *
    * This starts off as an empty array.
    */
-  items: Readonly<Ref<Readonly<Array<Resource<T>>>>>;
+  items: Readonly<Ref<Readonly<Array<Resource<T>>>>>
 
   /**
    * Will be set to true if there are more pages on the API.
    */
-  hasNextPage: Readonly<Ref<boolean>>;
+  hasNextPage: Readonly<Ref<boolean>>
 
   /**
    * Call this function to load the next page. If there are no next pages,
    * a warning will be emitted.
    */
-  loadNextPage: () => void;
+  loadNextPage: () => void
 
 }
 
@@ -59,7 +59,7 @@ type UsePagedCollectionResponse<T> = {
  *     items,
  *     hasNextPage,
  *     loadNextPage
- *  } = usePagedResource<Article>(resource);
+ *  } = usePagedResource<Article>(resource)
  * </pre>
  *
  * The resource may be passed as a Resource object, a Promise<Resource>, or a
@@ -78,9 +78,9 @@ type UsePagedCollectionResponse<T> = {
  */
 export function usePagedCollection<T = any>(resourceLike: ResourceLike<any>, options?: UseCollectionOptions): UsePagedCollectionResponse<T> {
 
-  const rel = options?.rel || 'item';
+  const rel = options?.rel || 'item'
 
-  const items = shallowRef<Resource<T>[]>([]);
+  const items = shallowRef<Resource<T>[]>([])
 
   const { resourceState, loading, error, resource } = useReadResource({
     resource: resourceLike,
@@ -91,12 +91,12 @@ export function usePagedCollection<T = any>(resourceLike: ResourceLike<any>, opt
     initialGetRequestHeaders: {
       Prefer: 'transclude=' + rel,
     }
-  });
+  })
 
   watch(resourceState, val => {
-    if (!val) return;
+    if (!val) return
     items.value = [...items.value, ...val.followAll(rel)]
-  });
+  })
 
 
   const hasNextPage = computed(() => {
@@ -106,9 +106,9 @@ export function usePagedCollection<T = any>(resourceLike: ResourceLike<any>, opt
 
   const loadNextPage = () => {
     if (!hasNextPage.value) {
-      console.warn('loadNextPage was called, but there was no next page');
+      console.warn('loadNextPage was called, but there was no next page')
     }
-    resource.value = resourceState.value?.follow('next');
+    resource.value = resourceState.value?.follow('next')
   }
 
   return {
@@ -117,6 +117,6 @@ export function usePagedCollection<T = any>(resourceLike: ResourceLike<any>, opt
     items,
     hasNextPage,
     loadNextPage,
-  };
+  }
 
 }

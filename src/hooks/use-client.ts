@@ -1,5 +1,5 @@
-import { Client } from 'ketting';
-import { KettingClientKey } from '../config';
+import { Client } from 'ketting'
+import { KettingClientKey } from '../config'
 import { getCurrentInstance } from 'vue'
 
 export function useClient(): Readonly<Client> {
@@ -10,5 +10,5 @@ export function useClient(): Readonly<Client> {
         return client
     }
 
-    throw new Error('To use useClient, you must have a <KettingProvider> component set up');
+    throw new Error('To use useClient, you must have a <KettingProvider> component set up')
 }

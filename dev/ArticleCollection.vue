@@ -7,7 +7,10 @@
       v-for="(item, i) in items"
       :key="i"
     >
-      <article-collection-item :resource="item" />
+      <article-collection-item
+        collection-uri="/api/article"
+        :resource="item"
+      />
     </li>
   </ul>
   <p v-if="loading">
@@ -27,5 +30,5 @@ import { usePagedCollection } from '../src'
 import type { Article } from './types'
 import ArticleCollectionItem from './ArticleCollectionItem.vue'
 
-const { error, loading, items, hasNextPage, loadNextPage } = usePagedCollection<Article>('/api/article?page=1')
+const { error, loading, items, hasNextPage, loadNextPage } = usePagedCollection<Article>('/api/article?page=1', { refreshOnStale: true })
 </script>

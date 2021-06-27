@@ -1,6 +1,7 @@
 <template>
   <KettingProvider :client="client">
     <ArticleCollection />
+    <!-- <ArticleCollection /> -->
     <ArticleCollectionItem collection-uri="/api/article" />
   </KettingProvider>
 </template>

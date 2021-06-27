@@ -1,24 +1,26 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
-const path = require('path')
+import dts from 'vite-dts'
 
 export default defineConfig({
-  plugins: [vue()],
-  resolve: {
-    alias: {
-      '@': path.resolve(__dirname, '/src'),
-    },
-  },
+  plugins: [
+    vue(),
+    dts()
+  ],
   build: {
     lib: {
-      entry: path.resolve(__dirname, 'src/index.ts'),
-      name: 'vue-ketting'
+      entry: 'src/index.ts',
+      name: 'vue-ketting',
+      formats: ['es', 'cjs'],
     },
     rollupOptions: {
       // make sure to externalize deps that shouldn't be bundled
       // into your library
       external: ['vue', 'ketting'],
       output: {
+        // Since we publish our ./src folder, there's no point
+        // in bloating sourcemaps with another copy of it.
+        sourcemapExcludeSources: true,
         // Provide global variables to use in the UMD build
         // for externalized deps
         globals: {
@@ -26,6 +28,11 @@ export default defineConfig({
           ketting: 'ketting'
         }
       }
-    }
+    },
+    sourcemap: true,
+    // Reduce bloat from legacy polyfills.
+    target: 'esnext',
+    // Leave minification up to applications.
+    minify: false,
   }
 })

@@ -1,20 +1,24 @@
 {
-  "version": "0.0.0",
+  "version": "0.0.1",
   "name": "vue-ketting",
+  "engines": {
+    "node": ">=14.16"
+  },
   "files": [
-    "dist"
+    "dist",
+    "src"
   ],
-  "main": "./dist/my-lib.umd.js",
-  "module": "./dist/my-lib.es.js",
+  "main": "./dist/vue-ketting.cjs.js",
+  "module": "./dist/vue-ketting.es.js",
   "exports": {
     ".": {
-      "import": "./dist/my-lib.es.js",
-      "require": "./dist/my-lib.umd.js"
+      "import": "./dist/vue-ketting.es.js",
+      "require": "./dist/vue-ketting.umd.js"
     }
   },
   "scripts": {
     "dev": "vite",
-    "build": "rimraf ./dist && vuedx-typecheck . && vite build",
+    "build": "rimraf ./dist && vite build",
     "lint:script": "eslint --ext .ts,vue --ignore-path .gitignore ."
   },
   "peerDependencies": {
@@ -29,8 +33,8 @@
     "@vitejs/plugin-vue": "^1.2.3",
     "@vue/compiler-sfc": "^3.1.2",
     "@vue/eslint-config-typescript": "^7.0.0",
-    "@vuedx/typecheck": "^0.4.1",
-    "@vuedx/typescript-plugin-vue": "^0.4.1",
+    "@vuedx/typecheck": "^0.7.4",
+    "@vuedx/typescript-plugin-vue": "^0.7.4",
     "eslint": "^7.29.0",
     "eslint-plugin-vue": "^7.12.1",
     "faker": "^5.5.3",
@@ -39,6 +43,7 @@
     "rimraf": "^3.0.2",
     "typescript": "^4.3.4",
     "vite": "^2.3.8",
+    "vite-dts": "^1.0.3",
     "vue": "^3.1.2"
   }
 }

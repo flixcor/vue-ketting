@@ -25,7 +25,7 @@ type UsePagedCollectionResponse<T> = {
    *
    * This starts off as an empty array.
    */
-   items: Readonly<Ref<Readonly<Array<Resource<T>>>>>;
+  items: Readonly<Ref<Readonly<Array<Resource<T>>>>>;
 
   /**
    * Will be set to true if there are more pages on the API.
@@ -101,7 +101,7 @@ export function usePagedCollection<T = any>(resourceLike: ResourceLike<any>, opt
 
   const hasNextPage = computed(() => {
     const val = resourceState.value
-        return val?.links.has('next') || false
+    return val?.links.has('next') || false
   })
 
   const loadNextPage = () => {

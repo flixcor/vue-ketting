@@ -1,5 +1,5 @@
 import { Resource, State as ResourceState } from 'ketting';
-import type { ResourceLike  } from '../util'
+import type { ResourceLike } from '../util'
 import { watch, shallowRef } from 'vue'
 import type { Ref } from 'vue'
 import { useReadResource } from './use-read-resource';
@@ -97,7 +97,7 @@ export function useCollection<T = any>(resourceLike: ResourceLike<any>, options?
   const items = shallowRef<Resource<T>[]>([]);
 
   watch(resourceState, val => {
-    if(!val) return
+    if (!val) return
     items.value = val.followAll(rel)
   }, {
     immediate: true

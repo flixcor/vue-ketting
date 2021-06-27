@@ -1,12 +1,25 @@
 <template>
-    <div v-if="error">{{ error.message }}</div>
-    <ul v-else-if="items">
-        <li v-for="(item, i) in items" :key="i">
-            <article-collection-item :resource="item" />
-        </li>
-    </ul>
-    <p v-if="loading">Loading...</p>
-    <button v-else-if="hasNextPage" type="button" @click="loadNextPage">Next page</button>
+  <div v-if="error">
+    {{ error.message }}
+  </div>
+  <ul v-else-if="items">
+    <li
+      v-for="(item, i) in items"
+      :key="i"
+    >
+      <article-collection-item :resource="item" />
+    </li>
+  </ul>
+  <p v-if="loading">
+    Loading...
+  </p>
+  <button
+    v-else-if="hasNextPage"
+    type="button"
+    @click="loadNextPage"
+  >
+    Next page
+  </button>
 </template>
 
 <script setup lang="ts">

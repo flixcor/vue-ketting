@@ -1,22 +1,42 @@
 <template>
-    <p v-if="loading">Loading...</p>
-    <template v-else-if="data">
-        <label>
-            Id
-            <span>{{ data.id }}</span>
-        </label>
-        <label>
-            Title
-            <input :value="data.title" @change="handleTitle" >
-        </label>
-        <label>
-            Body
-            <textarea :value="data.body" @change="handleBody" />
-        </label>
-        <button type="button" @click="submit">Save</button>
-        <button type="button" @click="resource?.refresh()">Undo</button>
-    </template>
-    <div v-else>{{ error?.message || 'something went horribly wrong' }}</div>
+  <p v-if="loading">
+    Loading...
+  </p>
+  <template v-else-if="data">
+    <label>
+      Id
+      <span>{{ data.id }}</span>
+    </label>
+    <label>
+      Title
+      <input
+        :value="data.title"
+        @change="handleTitle"
+      >
+    </label>
+    <label>
+      Body
+      <textarea
+        :value="data.body"
+        @change="handleBody"
+      />
+    </label>
+    <button
+      type="button"
+      @click="submit"
+    >
+      Save
+    </button>
+    <button
+      type="button"
+      @click="resource?.refresh()"
+    >
+      Undo
+    </button>
+  </template>
+  <div v-else>
+    {{ error?.message || 'something went horribly wrong' }}
+  </div>
 </template>
   
 <script setup lang="ts"> 

@@ -29,13 +29,13 @@ type UseReadResourceResponse<T> = {
 }
 
 type PostOptions<T> = {
-    mode: 'POST',
-    initialState: ResourceState<T>        
+  mode: 'POST',
+  initialState: ResourceState<T>
 }
 
 type NonPostOptions<T> = {
-    mode?: 'PUT',
-    initialState?: ResourceState<T> 
+  mode?: 'PUT',
+  initialState?: ResourceState<T>
 }
 
 export type UseReadResourceOptions<T> = (PostOptions<T> | NonPostOptions<T>) & {
@@ -78,79 +78,79 @@ export type UseReadResourceOptions<T> = (PostOptions<T> | NonPostOptions<T>) & {
  */
 export function useReadResource<T>(options: UseReadResourceOptions<T>): UseReadResourceResponse<T> {
 
-  const {resource} = useResolveResource(options.resource);
+  const { resource } = useResolveResource(options.resource);
   const { initialState, refreshOnStale, mode } = options
   const client = useClient();
 
-  const {resourceState, loading} = useResourceState(resource, initialState, client);
-  const error = shallowRef<null|Error>(null);
+  const { resourceState, loading } = useResourceState(resource, initialState, client);
+  const error = shallowRef<null | Error>(null);
 
   watch(resource, (val, _oldVal, onInvalidate) => {
-      // This effect is for setting up the onUpdate event
-      if(!val || mode === 'POST') return
+    // This effect is for setting up the onUpdate event
+    if (!val || mode === 'POST') return
 
-      const onUpdate = (newState: ResourceState<T>) => {
-        resourceState.value = newState.clone()
-      };
+    const onUpdate = (newState: ResourceState<T>) => {
+      resourceState.value = newState.clone()
+    };
 
-      const onStale = () => {
-        if (refreshOnStale) {
-          val
-            .refresh()
-            .catch(err => {
-              error.value = err;
-            });
-        }
-      };
+    const onStale = () => {
+      if (refreshOnStale) {
+        val
+          .refresh()
+          .catch(err => {
+            error.value = err;
+          });
+      }
+    };
 
-      val.on('update', onUpdate);
-      val.on('stale', onStale);
+    val.on('update', onUpdate);
+    val.on('stale', onStale);
 
-      onInvalidate(function unmount() {
-        val.off('update', onUpdate);
-        val.off('stale', onStale);
-      })
+    onInvalidate(function unmount() {
+      val.off('update', onUpdate);
+      val.off('stale', onStale);
+    })
   })
 
   watch(resource, val => {
-      // This effect is for fetching the initial ResourceState
-      if(!val) return
-      const state = resourceState.value
+    // This effect is for fetching the initial ResourceState
+    if (!val) return
+    const state = resourceState.value
 
-      // Don't do anything if we already have a resourceState, and the
-      // resourceState's uri matches what we got.
-      //
-      // This likely means we got the resourceState from the initial
-      // useResourceState hook.
-      if(state && state.uri === val.uri) return
+    // Don't do anything if we already have a resourceState, and the
+    // resourceState's uri matches what we got.
+    //
+    // This likely means we got the resourceState from the initial
+    // useResourceState hook.
+    if (state && state.uri === val.uri) return
 
-      // The 'resource' property has changed, so lets get the new resourceState and data.
-      const cachedState = val.client.cache.get(val.uri);
-        if (cachedState) {
-            resourceState.value = cachedState
-            return;
-        } 
-        
-        resourceState.value = undefined;
-        loading.value = true
+    // The 'resource' property has changed, so lets get the new resourceState and data.
+    const cachedState = val.client.cache.get(val.uri);
+    if (cachedState) {
+      resourceState.value = cachedState
+      return;
+    }
 
-        val.get({ headers: options.initialGetRequestHeaders })
-            .catch(err => {
-                error.value = err
-            });
+    resourceState.value = undefined;
+    loading.value = true
+
+    val.get({ headers: options.initialGetRequestHeaders })
+      .catch(err => {
+        error.value = err
+      });
   })
 
-    watch(error, val => {
-        if(val) {
-            loading.value = false
-        }
-    })
+  watch(error, val => {
+    if (val) {
+      loading.value = false
+    }
+  })
 
-    watch(resourceState, val => {
-        if(val) {
-            loading.value = false
-        }
-    })
+  watch(resourceState, val => {
+    if (val) {
+      loading.value = false
+    }
+  })
 
   const result: UseReadResourceResponse<T> = {
     loading,
@@ -173,19 +173,19 @@ function useResourceState<T>(
   client: Client,
 ) {
 
-  const data = 
-    initialData || 
-    (resource instanceof Resource && client.cache.get(resource.uri)) || 
+  const data =
+    initialData ||
+    (resource instanceof Resource && client.cache.get(resource.uri)) ||
     undefined
 
   const loading = shallowRef(!data)
 
-  const theRef = shallowRef<ResourceState<T>| undefined>(data)
+  const theRef = shallowRef<ResourceState<T> | undefined>(data)
 
   watch(resource, val => {
-    if(!val) return
+    if (!val) return
     theRef.value = client.cache.get(val.uri) || initialData
-})
+  })
 
-  return {resourceState: theRef, loading}
+  return { resourceState: theRef, loading }
 }

@@ -1,7 +1,7 @@
 import { provide, defineComponent } from 'vue'
-import type { PropType  } from 'vue'
+import type { PropType } from 'vue'
 import { KettingClientKey } from '../config'
-import type {Client} from 'ketting'
+import type { Client } from 'ketting'
 
 export default defineComponent({
   name: 'KettingProvider',

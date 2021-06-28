@@ -1,10 +1,9 @@
 import { Client } from 'ketting'
 import { KettingClientKey } from '../config'
-import { getCurrentInstance } from 'vue'
+import { inject } from 'vue'
 
 export function useClient(): Readonly<Client> {
-    const instance = getCurrentInstance() as any
-    const client = instance?.provides[KettingClientKey]
+    const client = inject(KettingClientKey)
 
     if (client instanceof Client) {
         return client

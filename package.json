@@ -19,7 +19,8 @@
   "scripts": {
     "dev": "vite",
     "build": "rimraf ./dist && vite build && copyfiles --flat types/*.d.ts dist",
-    "lint:script": "eslint --ext .ts,vue --ignore-path .gitignore ."
+    "lint:script": "eslint --ext .ts,vue --ignore-path .gitignore .",
+    "prepublishOnly": "pnpm run build"
   },
   "peerDependencies": {
     "ketting": "^7.1.1",

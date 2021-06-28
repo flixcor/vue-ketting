@@ -9,7 +9,6 @@ export default defineConfig({
     lib: {
       entry: 'src/index.ts',
       name: 'vue-ketting',
-      formats: ['es', 'cjs'],
     },
     rollupOptions: {
       // make sure to externalize deps that shouldn't be bundled

@@ -8,12 +8,12 @@
     "dist",
     "src"
   ],
-  "main": "./dist/vue-ketting.cjs.js",
+  "main": "./dist/vue-ketting.umd.js",
   "module": "./dist/vue-ketting.es.js",
   "exports": {
     ".": {
       "import": "./dist/vue-ketting.es.js",
-      "require": "./dist/vue-ketting.cjs.js"
+      "require": "./dist/vue-ketting.umd.js"
     }
   },
   "scripts": {

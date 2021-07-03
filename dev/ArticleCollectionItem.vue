@@ -38,14 +38,14 @@
     {{ error?.message || 'something went horribly wrong' }}
   </div>
 </template>
-  
-<script setup lang="ts"> 
+
+<script setup lang="ts">
 import { defineProps } from 'vue'
+import type { PropType } from 'vue'
+import type { Resource } from 'ketting'
 import { useResource } from '../src'
 import type { UseResourceOptions } from '../src'
-import type { PropType } from 'vue'
 import type { Article } from './types'
-import type { Resource } from 'ketting'
 
 const props = defineProps({
   collectionUri: {
@@ -54,8 +54,8 @@ const props = defineProps({
   },
   resource: {
     default: undefined,
-    type: Object as PropType<Resource<Article> | undefined>
-  }
+    type: Object as PropType<Resource<Article> | undefined>,
+  },
 })
 
 const options: UseResourceOptions<Article> = props.resource
@@ -68,18 +68,18 @@ const options: UseResourceOptions<Article> = props.resource
     resource: props.collectionUri,
     mode: 'POST',
     refreshOnStale: true,
-    initialState: { title: '', body: '' }
+    initialState: { title: '', body: '' },
   }
 
 const { error, loading, setData, submit, data, resource, resourceState } = useResource(options)
 
-function handleChange (ev: Event, prop: keyof Article) {
+function handleChange(ev: Event, prop: keyof Article) {
   const value = data.value
-  if(!value) return
+  if (!value) return
   const input = ev.target as HTMLInputElement
   setData({
     ...value,
-    [prop]: input.value
+    [prop]: input.value,
   })
 }
 

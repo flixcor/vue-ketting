@@ -1,7 +1,7 @@
 import { Resource } from 'ketting'
-import type { ResourceLike } from '../util'
 import { watch, shallowRef } from 'vue'
 import type { Ref } from 'vue'
+import type { ResourceLike } from '../util'
 import { useReadResource } from './use-read-resource'
 
 /**
@@ -83,24 +83,23 @@ export type UseCollectionOptions = {
  *           T is the passed generic argument.
  */
 export function useCollection<T = any>(resourceLike: ResourceLike<any>, options?: UseCollectionOptions): UseCollectionResponse<T> {
-
   const rel = options?.rel || 'item'
 
   const { resourceState, loading, error } = useReadResource({
     resource: resourceLike,
     refreshOnStale: options?.refreshOnStale,
     initialGetRequestHeaders: {
-      Prefer: 'transclude=' + rel,
-    }
+      Prefer: `transclude=${rel}`,
+    },
   })
 
   const items = shallowRef<Resource<T>[]>([])
 
-  watch(resourceState, val => {
+  watch(resourceState, (val) => {
     if (!val) return
     items.value = val.followAll(rel)
   }, {
-    immediate: true
+    immediate: true,
   })
 
   return {
@@ -108,5 +107,4 @@ export function useCollection<T = any>(resourceLike: ResourceLike<any>, options?
     error,
     items,
   }
-
 }

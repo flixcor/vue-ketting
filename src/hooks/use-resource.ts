@@ -1,41 +1,39 @@
-import type { Client, State as ResourceState, } from 'ketting'
+import type { Client, State as ResourceState } from 'ketting'
 import { HalState, Links, Resource, isState } from 'ketting'
 import { computed } from 'vue'
 import type { Ref } from 'vue'
-import { useClient } from './use-client'
 import type { ResourceLike } from '../util'
+import { useClient } from './use-client'
 import { useReadResource, UseReadResourceOptions } from './use-read-resource'
-
-
 
 type UseResourceResponse<T> = Readonly<{
   // True if there is no data yet
-  loading: Readonly<Ref<boolean>>,
-  error: Readonly<Ref<Readonly<Error> | null>>,
+  loading: Readonly<Ref<boolean>>
+  error: Readonly<Ref<Readonly<Error> | null>>
   // A full Ketting State object
-  resourceState: Readonly<Ref<Readonly<ResourceState<Readonly<T>>> | undefined>>,
+  resourceState: Readonly<Ref<Readonly<ResourceState<Readonly<T>>> | undefined>>
   // Update the state
-  setResourceState: (newState: ResourceState<T>) => void,
+  setResourceState: (newState: ResourceState<T>) => void
   // Send the state to the server via a PUT or POST request.
-  submit: () => Promise<void>,
+  submit: () => Promise<void>
   // The 'data' part of the state.
-  data: Readonly<Ref<Readonly<T> | undefined>>,
+  data: Readonly<Ref<Readonly<T> | undefined>>
   // Update the data from the state.
-  setData: (newData: T) => void,
+  setData: (newData: T) => void
   // The 'real' resource.
-  resource: Readonly<Ref<Readonly<Resource<T>> | undefined>>,
+  resource: Readonly<Ref<Readonly<Resource<T>> | undefined>>
 }>
 
 export type UseResourceOptions<T> = {
-  mode: 'PUT',
-  resource: ResourceLike<T>,
-  initialState?: T | ResourceState<T>,
-  refreshOnStale?: boolean,
+  mode: 'PUT'
+  resource: ResourceLike<T>
+  initialState?: T | ResourceState<T>
+  refreshOnStale?: boolean
 } | {
-  mode: 'POST',
-  resource: ResourceLike<T>,
-  initialState: T | ResourceState<T>,
-  refreshOnStale?: boolean,
+  mode: 'POST'
+  resource: ResourceLike<T>
+  initialState: T | ResourceState<T>
+  refreshOnStale?: boolean
 }
 
 /**
@@ -104,50 +102,48 @@ export function useResource<T>(arg1: ResourceLike<T> | UseResourceOptions<T> | s
 
   return {
     async submit() {
-      const stateVal = resourceState.value, resourceVal = resource.value
+      const stateVal = resourceState.value; const resourceVal = resource.value
 
-      if (!stateVal || !resourceVal) {
+      if (!stateVal || !resourceVal)
         throw new Error('Too early to call submit()')
-      }
 
       if (opts.mode === 'POST') {
         const newResource = await resourceVal.postFollow(stateVal)
         opts.mode = 'PUT'
         resource.value = newResource
-      } else {
+      }
+      else {
         await resourceVal.put(stateVal)
       }
     },
     setData(newData: T) {
-      const stateVal = resourceState.value,
-        resourceVal = resource.value
+      const stateVal = resourceState.value
+      const resourceVal = resource.value
 
-      if (!stateVal || !resourceVal) {
+      if (!stateVal || !resourceVal)
         throw new Error('Too early to call setData, we don\'t have a current state to update')
-      }
+
       stateVal.data = newData
-      if (opts.mode === 'PUT') {
+      if (opts.mode === 'PUT')
         resourceVal.updateCache(stateVal)
-      } else {
+      else
         resourceState.value = stateVal.clone()
-      }
     },
     setResourceState(newState: ResourceState<T>) {
       const resourceVal = resource.value
-      if (!resourceVal) {
+      if (!resourceVal)
         throw new Error('Too early to call setResourceState, we don\'t have a current state to update')
-      }
-      if (opts.mode === 'PUT') {
+
+      if (opts.mode === 'PUT')
         resourceVal.updateCache(newState)
-      } else {
+      else
         resourceState.value = newState.clone()
-      }
     },
     data,
     resourceState,
     loading,
     resource,
-    error
+    error,
   }
 }
 
@@ -159,13 +155,13 @@ function getUseReadResourceOptions<T>(arg1: ResourceLike<T> | UseResourceOptions
     if (arg1.mode === 'POST') {
       return {
         ...arg1,
-        initialState: dataToState(arg1.initialState, client)
+        initialState: dataToState(arg1.initialState, client),
       }
     }
 
     return {
       ...arg1,
-      initialState: arg1.initialState && dataToState(arg1.initialState, client)
+      initialState: arg1.initialState && dataToState(arg1.initialState, client),
     }
   }
 
@@ -176,7 +172,6 @@ function getUseReadResourceOptions<T>(arg1: ResourceLike<T> | UseResourceOptions
     refreshOnStale: false,
   }
 }
-
 
 function isUseResourceOptions<T>(input: any | UseResourceOptions<T>): input is UseResourceOptions<T> {
   return input.mode === 'PUT' || input.mode === 'POST'
@@ -189,11 +184,13 @@ function isUseResourceOptions<T>(input: any | UseResourceOptions<T>): input is U
  * reasonable default, but this may change in the future.
  */
 function dataToState<T>(data: T | ResourceState<T>, client: Client): ResourceState<T> {
-  return isState(data) ? data : new HalState({
-    uri: 'about:blank' + Math.random(),
-    client,
-    data,
-    headers: new Headers(),
-    links: new Links('about:blank'),
-  })
+  return isState(data)
+    ? data
+    : new HalState({
+      uri: `about:blank${Math.random()}`,
+      client,
+      data,
+      headers: new Headers(),
+      links: new Links('about:blank'),
+    })
 }

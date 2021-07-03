@@ -1,8 +1,8 @@
 import { Resource } from 'ketting'
-import { ResourceLike } from '../util'
-import { UseCollectionOptions } from './use-collection'
 import { shallowRef, watch, computed } from 'vue'
 import type { Ref } from 'vue'
+import { ResourceLike } from '../util'
+import { UseCollectionOptions } from './use-collection'
 import { useReadResource } from './use-read-resource'
 
 /**
@@ -77,7 +77,6 @@ type UsePagedCollectionResponse<T> = {
  *                  items array.
  */
 export function usePagedCollection<T = any>(resourceLike: ResourceLike<any>, options?: UseCollectionOptions): UsePagedCollectionResponse<T> {
-
   const rel = options?.rel || 'item'
 
   const items = shallowRef<Resource<T>[]>([])
@@ -89,15 +88,14 @@ export function usePagedCollection<T = any>(resourceLike: ResourceLike<any>, opt
     // This may be helpful to the server and instruct it to embed
     // all collection members in that initial fetch.
     initialGetRequestHeaders: {
-      Prefer: 'transclude=' + rel,
-    }
+      Prefer: `transclude=${rel}`,
+    },
   })
 
-  watch(resourceState, val => {
+  watch(resourceState, (val) => {
     if (!val) return
     items.value = [...items.value, ...val.followAll(rel)]
   })
-
 
   const hasNextPage = computed(() => {
     const val = resourceState.value
@@ -105,9 +103,9 @@ export function usePagedCollection<T = any>(resourceLike: ResourceLike<any>, opt
   })
 
   const loadNextPage = () => {
-    if (!hasNextPage.value) {
+    if (!hasNextPage.value)
       console.warn('loadNextPage was called, but there was no next page')
-    }
+
     resource.value = resourceState.value?.follow('next')
   }
 
@@ -118,5 +116,4 @@ export function usePagedCollection<T = any>(resourceLike: ResourceLike<any>, opt
     hasNextPage,
     loadNextPage,
   }
-
 }

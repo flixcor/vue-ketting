@@ -1,9 +1,9 @@
 import { createServer, Model, Factory, Response, Request } from 'miragejs'
+import { lorem } from 'faker'
 import type { Article } from './types'
-import { lorem } from "faker"
 
 const pageSize = 5
-function getPage<T>(items: T[], pageNumber: number): { previous?: number, next?: number, page: T[] } {
+function getPage<T>(items: T[], pageNumber: number): { previous?: number; next?: number; page: T[] } {
   const start = (pageNumber - 1) * pageSize
   const end = pageNumber * pageSize
   const pagePlusOne = items.filter((_x, i) => i >= start && i <= end)
@@ -13,7 +13,7 @@ function getPage<T>(items: T[], pageNumber: number): { previous?: number, next?:
   return {
     page,
     next,
-    previous
+    previous,
   }
 }
 
@@ -32,7 +32,7 @@ function shouldEmbed(request: Request): boolean {
 export default function useApiStub() {
   return createServer({
     models: {
-      article: Model.extend<Partial<Article>>({})
+      article: Model.extend<Partial<Article>>({}),
     },
     factories: {
       article: Factory.extend<Record<keyof Article, () => string>>({
@@ -41,8 +41,8 @@ export default function useApiStub() {
         },
         body() {
           return lorem.paragraphs(5)
-        }
-      })
+        },
+      }),
     },
     seeds(server) {
       server.createList('article', 20)
@@ -57,30 +57,31 @@ export default function useApiStub() {
         const pageNumber = parsePageNumber(request)
         const { page, next, previous } = getPage(schema.all('article').models, pageNumber)
         const links = {
-          self: { href: '/api/article?page=' + pageNumber },
-          next: next && { href: '/api/article?page=' + next },
-          previous: previous && { href: '/api/article?page=' + previous }
+          self: { href: `/api/article?page=${pageNumber}` },
+          next: next && { href: `/api/article?page=${next}` },
+          previous: previous && { href: `/api/article?page=${previous}` },
         }
         return shouldEmbed(request)
           ? {
             _embedded: {
               item: page.map(({ id, title, body }) => ({
                 _links: {
-                  self: { href: `/api/article/${id}` }
+                  self: { href: `/api/article/${id}` },
                 },
                 id,
                 title,
-                body
-              }))
+                body,
+              })),
             },
-            _links: links
-          } : {
+            _links: links,
+          }
+          : {
             _links: {
               ...links,
               item: page.map(({ id }) => ({
-                href: `/api/article/${id}`
-              }))
-            }
+                href: `/api/article/${id}`,
+              })),
+            },
           }
       })
       this.put('/api/article/:id', (schema, request) => {
@@ -94,7 +95,7 @@ export default function useApiStub() {
       })
       this.post('/api/article', (schema, request) => {
         const article = schema.create('article', JSON.parse(request.requestBody))
-        return new Response(201, { 'Location': '/api/article/' + article.id })
+        return new Response(201, { Location: `/api/article/${article.id}` })
       })
     },
   })

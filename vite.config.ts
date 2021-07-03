@@ -3,7 +3,7 @@ import vue from '@vitejs/plugin-vue'
 
 export default defineConfig({
   plugins: [
-    vue()
+    vue(),
   ],
   build: {
     lib: {
@@ -22,14 +22,14 @@ export default defineConfig({
         // for externalized deps
         globals: {
           vue: 'Vue',
-          ketting: 'ketting'
-        }
-      }
+          ketting: 'ketting',
+        },
+      },
     },
     sourcemap: true,
     // Reduce bloat from legacy polyfills.
     target: 'esnext',
     // Leave minification up to applications.
     minify: false,
-  }
+  },
 })

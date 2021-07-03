@@ -1,12 +1,12 @@
-import { useClient } from './use-client'
-import type { ResourceLike } from '../util'
 import { Resource, Client } from 'ketting'
 import { shallowRef } from 'vue'
 import type { Ref } from 'vue'
+import type { ResourceLike } from '../util'
+import { useClient } from './use-client'
 
 type UseResolveResourceResult<T> = {
-  error: Ref<Error | null>,
-  resource: Ref<Resource<T> | undefined>,
+  error: Ref<Error | null>
+  resource: Ref<Resource<T> | undefined>
 }
 
 /**
@@ -14,7 +14,6 @@ type UseResolveResourceResult<T> = {
  * a real materialized resource.
  */
 export function useResolveResource<T>(resourceLike: ResourceLike<T> | string): UseResolveResourceResult<T> {
-
   const client = useClient()
   const quick = quickResolve(client, resourceLike)
   const resource = shallowRef<Resource<T> | undefined>()
@@ -24,19 +23,20 @@ export function useResolveResource<T>(resourceLike: ResourceLike<T> | string): U
     setTimeout(() => {
       resource.value = quick
     })
-  } else {
+  }
+  else {
     Promise.resolve(resourceLike as PromiseLike<Resource<T>>)
-      .then(newVal => {
+      .then((newVal) => {
         resource.value = newVal
       })
-      .catch(err => {
+      .catch((err) => {
         error.value = err
       })
   }
 
   return {
     resource,
-    error
+    error,
   }
 }
 
@@ -45,12 +45,9 @@ export function useResolveResource<T>(resourceLike: ResourceLike<T> | string): U
  * but only if this can be done synchronously.
  */
 function quickResolve<T>(client: Client, resourceLike: ResourceLike<T>): Resource<T> | undefined {
-
-  if (typeof resourceLike === 'string') {
+  if (typeof resourceLike === 'string')
     return client.go(resourceLike)
-  }
-  if (resourceLike instanceof Resource) {
-    return resourceLike
-  }
 
+  if (resourceLike instanceof Resource)
+    return resourceLike
 }

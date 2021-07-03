@@ -1,15 +1,15 @@
 import { provide, defineComponent } from 'vue'
 import type { PropType } from 'vue'
-import { KettingClientKey } from '../config'
 import type { Client } from 'ketting'
+import { KettingClientKey } from '../config'
 
 export default defineComponent({
   name: 'KettingProvider',
   props: {
     client: {
       type: Object as PropType<Client>,
-      required: true
-    }
+      required: true,
+    },
   },
   setup: (props, ctx) => {
     provide(KettingClientKey, props.client)
@@ -19,5 +19,5 @@ export default defineComponent({
         ? slot()
         : []
     }
-  }
+  },
 })

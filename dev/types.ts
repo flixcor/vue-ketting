@@ -3,6 +3,6 @@
 * OpenAPI definition.
 */
 export type Article = {
-    title: string;
-    body: string;
+  title: string
+  body: string
 }

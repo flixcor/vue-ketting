@@ -1,9 +1,9 @@
-import { Resource, State as ResourceState } from 'ketting'
-import { shallowRef, watch, computed } from 'vue'
+import { Resource, State as ResourceState, Client } from 'ketting'
+import { shallowRef, watch } from 'vue'
 import type { Ref } from 'vue'
 import { ResourceLike } from '../util'
 import { useClient } from './use-client'
-import { Client } from 'ketting'
+
 import { useResolveResource } from './use-resolve-resource'
 
 type UseReadResourceResponse<T> = {
@@ -29,18 +29,18 @@ type UseReadResourceResponse<T> = {
 }
 
 type PostOptions<T> = {
-  mode: 'POST' | 'PUT',
+  mode: 'POST' | 'PUT'
   initialState: ResourceState<T>
 }
 
 type NonPostOptions<T> = {
-  mode?: 'PUT',
+  mode?: 'PUT'
   initialState?: ResourceState<T>
 }
 
 export type UseReadResourceOptions<T> = (PostOptions<T> | NonPostOptions<T>) & {
-  resource: ResourceLike<T>,
-  refreshOnStale?: boolean,
+  resource: ResourceLike<T>
+  refreshOnStale?: boolean
 
   /**
    * HTTP headers to include if there was no existing cache, and the initial
@@ -77,7 +77,6 @@ export type UseReadResourceOptions<T> = (PostOptions<T> | NonPostOptions<T>) & {
  *                   contain the parsed JSON from the server.
  */
 export function useReadResource<T>(options: UseReadResourceOptions<T>): UseReadResourceResponse<T> {
-
   const { resource } = useResolveResource(options.resource)
   const client = useClient()
   const { resourceState, loading } = useResourceState(resource, options.initialState, client)
@@ -95,7 +94,7 @@ export function useReadResource<T>(options: UseReadResourceOptions<T>): UseReadR
       if (options.refreshOnStale) {
         val
           .refresh()
-          .catch(err => {
+          .catch((err) => {
             error.value = err
           })
       }
@@ -104,13 +103,13 @@ export function useReadResource<T>(options: UseReadResourceOptions<T>): UseReadR
     val.on('update', onUpdate)
     val.on('stale', onStale)
 
-    onInvalidate(function unmount() {
+    onInvalidate(() => {
       val.off('update', onUpdate)
       val.off('stale', onStale)
     })
   })
 
-  watch(resource, val => {
+  watch(resource, (val) => {
     // This effect is for fetching the initial ResourceState
     if (!val || options.mode === 'POST') return
     const state = resourceState.value
@@ -133,21 +132,19 @@ export function useReadResource<T>(options: UseReadResourceOptions<T>): UseReadR
     loading.value = true
 
     val.get({ headers: options.initialGetRequestHeaders })
-      .catch(err => {
+      .catch((err) => {
         error.value = err
       })
   })
 
-  watch(error, val => {
-    if (val) {
+  watch(error, (val) => {
+    if (val)
       loading.value = false
-    }
   })
 
-  watch(resourceState, val => {
-    if (val) {
+  watch(resourceState, (val) => {
+    if (val)
       loading.value = false
-    }
   })
 
   const result: UseReadResourceResponse<T> = {
@@ -158,7 +155,6 @@ export function useReadResource<T>(options: UseReadResourceOptions<T>): UseReadR
   }
 
   return result
-
 }
 
 /**
@@ -170,11 +166,10 @@ function useResourceState<T>(
   initialData: undefined | ResourceState<T>,
   client: Client,
 ) {
-
-  const data =
-    initialData ||
-    (resource instanceof Resource && client.cache.get(resource.uri)) ||
-    undefined
+  const data
+    = initialData
+    || (resource instanceof Resource && client.cache.get(resource.uri))
+    || undefined
 
   const loading = shallowRef(!data)
 

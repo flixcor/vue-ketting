@@ -1,1 +1,1 @@
-export { default as KettingProvider } from "./KettingProvider"
+export { default as KettingProvider } from './KettingProvider'
